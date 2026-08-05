@@ -1,0 +1,513 @@
+[
+  {
+    "id": 1,
+    "category": "LECTURE DES PANNEAUX DE DANGER",
+    "title": "Ralentisseur",
+    "description": "Panneau officiel de signalisation : Ralentisseur.",
+    "image": "/images/panneaux/image1.png"
+  },
+  {
+    "id": 2,
+    "category": "LECTURE DES PANNEAUX DE DANGER",
+    "title": "Cassis dos-d’âne",
+    "description": "Panneau officiel de signalisation : Cassis dos-d’âne.",
+    "image": "/images/panneaux/image2.jpeg"
+  },
+  {
+    "id": 3,
+    "category": "LECTURE DES PANNEAUX DE DANGER",
+    "title": "Chaussée rétrécie à gauche",
+    "description": "Panneau officiel de signalisation : Chaussée rétrécie à gauche.",
+    "image": "/images/panneaux/image3.jpeg"
+  },
+  {
+    "id": 4,
+    "category": "LECTURE DES PANNEAUX DE DANGER",
+    "title": "Chaussée rétrécie à droite",
+    "description": "Panneau officiel de signalisation : Chaussée rétrécie à droite.",
+    "image": "/images/panneaux/image4.jpeg"
+  },
+  {
+    "id": 5,
+    "category": "LECTURE DES PANNEAUX DE DANGER",
+    "title": "Chaussée rétrécie des 02 cotes",
+    "description": "Panneau officiel de signalisation : Chaussée rétrécie des 02 cotes.",
+    "image": "/images/panneaux/image5.png"
+  },
+  {
+    "id": 6,
+    "category": "LECTURE DES PANNEAUX DE DANGER",
+    "title": "200 m",
+    "description": "Chaussée rétrécie à droite à 200 m",
+    "image": "/images/panneaux/image4.jpeg"
+  },
+  {
+    "id": 7,
+    "category": "LECTURE DES PANNEAUX DE DANGER",
+    "title": "Virage à droite",
+    "description": "Panneau officiel de signalisation : Virage à droite.",
+    "image": "/images/panneaux/image6.jpeg"
+  },
+  {
+    "id": 8,
+    "category": "LECTURE DES PANNEAUX DE DANGER",
+    "title": "Virage à gauche",
+    "description": "Panneau officiel de signalisation : Virage à gauche.",
+    "image": "/images/panneaux/image7.png"
+  },
+  {
+    "id": 9,
+    "category": "LECTURE DES PANNEAUX DE DANGER",
+    "title": "Succession de virage dont le 1er est à droit",
+    "description": "-ralentir",
+    "image": "/images/panneaux/image8.jpeg"
+  },
+  {
+    "id": 10,
+    "category": "LECTURE DES PANNEAUX DE DANGER",
+    "title": "Succession de virage dont le 1er est à gauche",
+    "description": "-ralentir",
+    "image": "/images/panneaux/image9.jpeg"
+  },
+  {
+    "id": 11,
+    "category": "LECTURE DES PANNEAUX DE DANGER",
+    "title": "500 m",
+    "description": "Succession de virage dont le 1er est à gauche à 500 m",
+    "image": "/images/panneaux/image9.jpeg"
+  },
+  {
+    "id": 12,
+    "category": "- Ici vue le panonceau sans les flèches signifie que la succession n’a pas encore commencée et qu’il reste du panneau une distance de 500 m du danger",
+    "title": "5 km",
+    "description": "Succession de virage dont le 1er est à gauche sur 5 km",
+    "image": "/images/panneaux/image9.jpeg"
+  },
+  {
+    "id": 13,
+    "category": "-le danger s’étend du panneau à 5 km",
+    "title": "Chaussée   glissante",
+    "description": "Risque de dérapage (pluie, huile ; gravillons …etc.)",
+    "image": "/images/panneaux/image10.png"
+  },
+  {
+    "id": 14,
+    "category": "-le danger s’étend du panneau à 5 km",
+    "title": "Pont mobile",
+    "description": "Panneau officiel de signalisation : Pont mobile.",
+    "image": "/images/panneaux/image11.jpeg"
+  },
+  {
+    "id": 15,
+    "category": "-le danger s’étend du panneau à 5 km",
+    "title": "Descente dangereuse",
+    "description": "Panneau officiel de signalisation : Descente dangereuse.",
+    "image": "/images/panneaux/image12.png"
+  },
+  {
+    "id": 16,
+    "category": "-le danger s’étend du panneau à 5 km",
+    "title": "Endroit fréquenté par les écoliers",
+    "description": "-Annonce la présence d’une école",
+    "image": "/images/panneaux/image13.png"
+  },
+  {
+    "id": 17,
+    "category": "-le danger s’étend du panneau à 5 km",
+    "title": "Endroit fréquenté par le cavalier",
+    "description": "Panneau officiel de signalisation : Endroit fréquenté par le cavalier.",
+    "image": "/images/panneaux/image14.jpeg"
+  },
+  {
+    "id": 18,
+    "category": "-le danger s’étend du panneau à 5 km",
+    "title": "Passage piéton ou le passage clouté",
+    "description": "-Souvent au niveau des feux tricolores. ce passage est réservé pour la circulation des piétons (bande piétons)",
+    "image": "/images/panneaux/image15.png"
+  },
+  {
+    "id": 19,
+    "category": "-le danger s’étend du panneau à 5 km",
+    "title": "Passage à niveau sans barrière",
+    "description": "ralentir  et passer avec prudence",
+    "image": "/images/panneaux/image16.png"
+  },
+  {
+    "id": 20,
+    "category": "-A la vue de ce panneau on s’attend : Panneau de Positionnement et les rails",
+    "title": "Passage à niveau minus de la demi-barrière à caractère automatique",
+    "description": "ralentir ; et ne passer qu’après la levée de la barrière et que le feu rouge clignotant soit éteint",
+    "image": "/images/panneaux/image17.png"
+  },
+  {
+    "id": 21,
+    "category": "-A la vue de ce panneau on s’attend : Panneau de Positionnement, la barrière automatique et les rails",
+    "title": "Passage à niveau minus de la demi-barrière à caractère manuel",
+    "description": "-ralentir ; et ne passer qu’après la levée de la barrière",
+    "image": "/images/panneaux/image18.jpeg"
+  },
+  {
+    "id": 22,
+    "category": "-A la vue de ce panneau on s’attend : Panneau de Positionnement, la barrière et les rails",
+    "title": "Débouchés sur un quai ou une berge",
+    "description": "Ralentir car vous êtes à l’approche d’une rivière un fleuve",
+    "image": "/images/panneaux/image19.png"
+  },
+  {
+    "id": 23,
+    "category": "-A la vue de ce panneau on s’attend : Panneau de Positionnement, la barrière et les rails",
+    "title": "Endroit fréquenté par les animaux domestiques",
+    "description": "Moutons ; bœufs cochons ……etc",
+    "image": "/images/panneaux/image20.jpeg"
+  },
+  {
+    "id": 24,
+    "category": "-A la vue de ce panneau on s’attend : Panneau de Positionnement, la barrière et les rails",
+    "title": "Endroit fréquenté par les animaux sauvages",
+    "description": "ralentir ; zone forestière, retournée  si possible, circuler avec de guide",
+    "image": "/images/panneaux/image21.png"
+  },
+  {
+    "id": 25,
+    "category": "-A la vue de ce panneau on s’attend : Panneau de Positionnement, la barrière et les rails",
+    "title": "Vent latéral",
+    "description": "Ralentir, présence de fort vent qui souffre de gauche ou de droit. conséquence : dérapage ou décollage comme un avion",
+    "image": "/images/panneaux/image22.png"
+  },
+  {
+    "id": 26,
+    "category": "-A la vue de ce panneau on s’attend : Panneau de Positionnement, la barrière et les rails",
+    "title": "Débouché du cycliste du gauche seulement",
+    "description": "Panneau officiel de signalisation : Débouché du cycliste du gauche seulement.",
+    "image": "/images/panneaux/image23.png"
+  },
+  {
+    "id": 27,
+    "category": "-A la vue de ce panneau on s’attend : Panneau de Positionnement, la barrière et les rails",
+    "title": "Débouché venant de droite vers la gauche",
+    "description": "Panneau officiel de signalisation : Débouché venant de droite vers la gauche.",
+    "image": "/images/panneaux/image24.jpeg"
+  },
+  {
+    "id": 28,
+    "category": "-A la vue de ce panneau on s’attend : Panneau de Positionnement, la barrière et les rails",
+    "title": "Circulation dangereuse dans les 02 sens à 0 m",
+    "description": "Panneau officiel de signalisation : Circulation dangereuse dans les 02 sens à 0 m.",
+    "image": "/images/panneaux/image25.png"
+  },
+  {
+    "id": 29,
+    "category": "-A la vue de ce panneau on s’attend : Panneau de Positionnement, la barrière et les rails",
+    "title": "150 m",
+    "description": "Circulation dangereuse dans les 02 sens à 150 m",
+    "image": "/images/panneaux/image25.png"
+  },
+  {
+    "id": 30,
+    "category": "-A la vue de ce panneau on s’attend : Panneau de Positionnement, la barrière et les rails",
+    "title": "-Risque de la chute de pierre",
+    "description": "-Présence de pierre sur la chaussée",
+    "image": "/images/panneaux/image26.png"
+  },
+  {
+    "id": 31,
+    "category": "-A la vue de ce panneau on s’attend : Panneau de Positionnement, la barrière et les rails",
+    "title": "-sens giratoire",
+    "description": "-terre-plein central",
+    "image": "/images/panneaux/image27.png"
+  },
+  {
+    "id": 32,
+    "category": "-A la vue de ce panneau on s’attend : Panneau de Positionnement, la barrière et les rails",
+    "title": "Panneau triangulaire portant une flèche barrée",
+    "description": "-Annonce la priorité de passage",
+    "image": "/images/panneaux/image28.png"
+  },
+  {
+    "id": 33,
+    "category": "LECTURE DES PANNEAUX DE DANGER TEMPORAIRE",
+    "title": "Chaussée rétrécie des 02 cotes à caractère temporaire",
+    "description": "Panneau officiel de signalisation : Chaussée rétrécie des 02 cotes à caractère temporaire.",
+    "image": "/images/panneaux/image29.png"
+  },
+  {
+    "id": 34,
+    "category": "LECTURE DES PANNEAUX DE DANGER TEMPORAIRE",
+    "title": "Cassis dos-d’âne  à caractère temporaire",
+    "description": "Panneau officiel de signalisation : Cassis dos-d’âne  à caractère temporaire.",
+    "image": "/images/panneaux/image30.png"
+  },
+  {
+    "id": 35,
+    "category": "LECTURE DES PANNEAUX DE DANGER TEMPORAIRE",
+    "title": "Travaux",
+    "description": "Panneau officiel de signalisation : Travaux.",
+    "image": "/images/panneaux/image31.png"
+  },
+  {
+    "id": 36,
+    "category": "LECTURE DES PANNEAUX DE DANGER TEMPORAIRE",
+    "title": "Chaussée glissante à caractère temporaire",
+    "description": "Panneau officiel de signalisation : Chaussée glissante à caractère temporaire.",
+    "image": "/images/panneaux/image32.png"
+  },
+  {
+    "id": 37,
+    "category": "LECTURE DES PANNEAUX D’OBLIGATION",
+    "title": "Voie réservée aux cavaliers",
+    "description": "Panneau officiel de signalisation : Voie réservée aux cavaliers.",
+    "image": "/images/panneaux/image33.png"
+  },
+  {
+    "id": 38,
+    "category": "LECTURE DES PANNEAUX D’OBLIGATION",
+    "title": "Voie réservée aux piétons",
+    "description": "Panneau officiel de signalisation : Voie réservée aux piétons.",
+    "image": "/images/panneaux/image34.png"
+  },
+  {
+    "id": 39,
+    "category": "LECTURE DES PANNEAUX D’OBLIGATION",
+    "title": "Voie réservée aux véhicules de transport en commun de personnes",
+    "description": "Panneau officiel de signalisation : Voie réservée aux véhicules de transport en commun de personnes.",
+    "image": "/images/panneaux/image35.png"
+  },
+  {
+    "id": 40,
+    "category": "LECTURE DES PANNEAUX D’OBLIGATION",
+    "title": "Vitesse minimum à 30 km/h",
+    "description": "Panneau officiel de signalisation : Vitesse minimum à 30 km/h.",
+    "image": "/images/panneaux/image36.png"
+  },
+  {
+    "id": 41,
+    "category": "A la vue de ce panneau, je peux conduire 30 km/h et plus",
+    "title": "Obligation d’aller tout droite  à la prochaine intersection",
+    "description": "Panneau officiel de signalisation : Obligation d’aller tout droite  à la prochaine intersection.",
+    "image": "/images/panneaux/image37.png"
+  },
+  {
+    "id": 42,
+    "category": "A la vue de ce panneau, je peux conduire 30 km/h et plus",
+    "title": "Obligation d’aller à droite ou à gauche à la prochaine intersection",
+    "description": "Panneau officiel de signalisation : Obligation d’aller à droite ou à gauche à la prochaine intersection.",
+    "image": "/images/panneaux/image38.png"
+  },
+  {
+    "id": 43,
+    "category": "A la vue de ce panneau, je peux conduire 30 km/h et plus",
+    "title": "Obligation d’aller tout droite ou à gauche  à la prochaine intersection",
+    "description": "Panneau officiel de signalisation : Obligation d’aller tout droite ou à gauche  à la prochaine intersection.",
+    "image": "/images/panneaux/image39.jpeg"
+  },
+  {
+    "id": 44,
+    "category": "A la vue de ce panneau, je peux conduire 30 km/h et plus",
+    "title": "Contournement obligatoire de l’obstacle par la droite",
+    "description": "Panneau officiel de signalisation : Contournement obligatoire de l’obstacle par la droite.",
+    "image": "/images/panneaux/image40.png"
+  },
+  {
+    "id": 45,
+    "category": "A la vue de ce panneau, je peux conduire 30 km/h et plus",
+    "title": "Obligation d’aller à droite à la prochaine intersection",
+    "description": "Panneau officiel de signalisation : Obligation d’aller à droite à la prochaine intersection.",
+    "image": "/images/panneaux/image41.png"
+  },
+  {
+    "id": 46,
+    "category": "A la vue de ce panneau, je peux conduire 30 km/h et plus",
+    "title": "Obligation de tourner à droite devant le panneau",
+    "description": "Fin de voie réservée aux cavaliers",
+    "image": "/images/panneaux/image42.png"
+  },
+  {
+    "id": 47,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "CIRCULATION INTERDITE DANS LES 02 SENS",
+    "description": "Je peux m’arrêter",
+    "image": "/images/panneaux/image43.jpeg"
+  },
+  {
+    "id": 48,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "SENS INTERDIT",
+    "description": "Je peux m’arrêter",
+    "image": "/images/panneaux/image44.png"
+  },
+  {
+    "id": 49,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "ACCES INTERDIT AUX VEHICULES SUSCEPTIBLES DE POLLUER L’EAU",
+    "description": "Panneau officiel de signalisation : ACCES INTERDIT AUX VEHICULES SUSCEPTIBLES DE POLLUER L’EAU.",
+    "image": "/images/panneaux/image45.png"
+  },
+  {
+    "id": 50,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "ACCES INTERDIT AUX VEHICULES SUSCEPTIBLES D’ETRE INFLAMMABLE",
+    "description": "Panneau officiel de signalisation : ACCES INTERDIT AUX VEHICULES SUSCEPTIBLES D’ETRE INFLAMMABLE.",
+    "image": "/images/panneaux/image46.png"
+  },
+  {
+    "id": 51,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "ACCES INTERDIT AUX VEHICULES SUSCEPTIBLES D’ETRE INFLAMMABLE",
+    "description": "Panneau officiel de signalisation : ACCES INTERDIT AUX VEHICULES SUSCEPTIBLES D’ETRE INFLAMMABLE.",
+    "image": "/images/panneaux/image47.png"
+  },
+  {
+    "id": 52,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "ACCES INTERDIT AUX VEHICULES SUSCEPTIBLES DE TRANSPORTER DES MARCHANDISES FRAUDULEUSES OU INTERDITES PAR LA LOI",
+    "description": "Panneau officiel de signalisation : ACCES INTERDIT AUX VEHICULES SUSCEPTIBLES DE TRANSPORTER DES MARCHANDISES FRAUDULEUSES OU INTERDITES PAR LA LOI.",
+    "image": "/images/panneaux/image48.jpeg"
+  },
+  {
+    "id": 53,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "ACCES INTERDIT",
+    "description": "TOUS VEHICULES D’EFFECTUER LE DEPASSEMENT",
+    "image": "/images/panneaux/image49.png"
+  },
+  {
+    "id": 54,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "ACCES INTERDIT",
+    "description": "A TOUS  VEHICULES DE FAIRE LE DEMI TOUR",
+    "image": "/images/panneaux/image50.png"
+  },
+  {
+    "id": 55,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "ACCES INTERDIT",
+    "description": "A TOUS  VEHICULES DE TOURNER A DROITE",
+    "image": "/images/panneaux/image51.png"
+  },
+  {
+    "id": 56,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "ACCES INTERDIT",
+    "description": "A TOUS  VEHICULES A TRACTION ANIMALE",
+    "image": "/images/panneaux/image52.png"
+  },
+  {
+    "id": 57,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "ACCES INTERDIT",
+    "description": "A TOUS  VEHICULES DE TRANSPORT DE MARCHANDISE",
+    "image": "/images/panneaux/image53.jpeg"
+  },
+  {
+    "id": 58,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "ACCES INTERDIT",
+    "description": "A TOUS  VEHICULES A MOTEUR",
+    "image": "/images/panneaux/image54.png"
+  },
+  {
+    "id": 59,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "ACCES INTERDIT",
+    "description": "A TOUS  VEHICULES DE TRANSPORT DE MARCHANDISES DE FAIRE LE DEPASSEMENT",
+    "image": "/images/panneaux/image55.png"
+  },
+  {
+    "id": 60,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "ACCES INTERDIT",
+    "description": "A TOUS  VEHICULES DONT LE PTAC DEPASSE",
+    "image": "/images/panneaux/image56.png"
+  },
+  {
+    "id": 61,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "LIMITATION DE HAUTEUR A 3.5 M",
+    "description": "Je passe si ;",
+    "image": "/images/panneaux/image57.png"
+  },
+  {
+    "id": 62,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "10 km",
+    "description": "LIMITATION DE HAUTEUR A 3.5 M A 10 KM",
+    "image": "/images/panneaux/image57.png"
+  },
+  {
+    "id": 63,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "ACCES INTERDIT",
+    "description": "A TOUS  VEHICULES DONT LA LONGUEUR DEPASSE  10 M",
+    "image": "/images/panneaux/image58.png"
+  },
+  {
+    "id": 64,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "ACCES INTERDIT",
+    "description": "AUX CYCLOMOTEURS",
+    "image": "/images/panneaux/image59.png"
+  },
+  {
+    "id": 65,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "CEDER LE PASSAGE AUX USAGERS VENANT EN SENS INVERSE",
+    "description": "Panneau officiel de signalisation : CEDER LE PASSAGE AUX USAGERS VENANT EN SENS INVERSE.",
+    "image": "/images/panneaux/image60.png"
+  },
+  {
+    "id": 66,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "LIMITATION DE VITESSE A TOUS LES VEHICULES A",
+    "description": "50 KM/H",
+    "image": "/images/panneaux/image61.png"
+  },
+  {
+    "id": 67,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "5 KM",
+    "description": "LIMITATION DE VITESSE A 50 KM/H  A TOUS LES VEHICULES SUR 5 KM",
+    "image": "/images/panneaux/image61.png"
+  },
+  {
+    "id": 68,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "500 M",
+    "description": "LIMITATION DE VITESSE A 50 KM/H  A TOUS LES VEHICULES A 500 M",
+    "image": "/images/panneaux/image61.png"
+  },
+  {
+    "id": 69,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "LIMITATION DE VITESSE",
+    "description": "60 KM/H AUX MOTOCYCLISTES",
+    "image": "/images/panneaux/image62.png"
+  },
+  {
+    "id": 70,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "ACCES INTERDIT",
+    "description": "A TOUS  VEHICULES DONT",
+    "image": "/images/panneaux/image64.png"
+  },
+  {
+    "id": 71,
+    "category": "LECTURE DES PANNEAUX D’INTERDICTION",
+    "title": "LECTURE DES PANNEAUX DE FIN INTERDICTION",
+    "description": "Panneau officiel de signalisation : LECTURE DES PANNEAUX DE FIN INTERDICTION.",
+    "image": "/images/panneaux/image65.png"
+  },
+  {
+    "id": 72,
+    "category": "LECTURE DES PANNEAUX DE FIN D’OBLIGATION",
+    "title": "LECTURE DES PANNEAUX DE FIN D’OBLIGATION",
+    "description": "Panneau officiel de signalisation : LECTURE DES PANNEAUX DE FIN D’OBLIGATION.",
+    "image": "/images/panneaux/image66.png"
+  },
+  {
+    "id": 73,
+    "category": "LECTURE DES PANNEAUX DE FIN D’OBLIGATION",
+    "title": "RESUME DU COURS DE CODE DE LA SEMAINE",
+    "description": "Panneau officiel de signalisation : RESUME DU COURS DE CODE DE LA SEMAINE.",
+    "image": "/images/panneaux/image68.png"
+  }
+]
