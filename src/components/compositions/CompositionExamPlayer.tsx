@@ -44,11 +44,17 @@ export function CompositionExamPlayer({ subject, questions, studentId }: Composi
   const [timeLeft, setTimeLeft] = useState(subject.duration_minutes * 60);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  // Audio state
+  // Audio & Volume state
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [volumeLevel, setVolumeLevel] = useState(1);
+  const audioRef = useRef<HTMLVideoElement | HTMLAudioElement | null>(null);
+  const supabase = createClient();
+  const { toast } = useToast();
+
+  const currentQuestion = questions[currentQuestionIndex] || questions[0];
 
   // Evaluation results
   const [results, setResults] = useState<{
@@ -61,51 +67,27 @@ export function CompositionExamPlayer({ subject, questions, studentId }: Composi
     durationSeconds: number;
   } | null>(null);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const supabase = createClient();
-  const { toast } = useToast();
-
-  const currentQuestion = questions[currentQuestionIndex] || questions[0];
-
-  // 1. Live Countdown Timer
+  // Initialize volume at max level on load
   useEffect(() => {
-    if (isSubmitted) return;
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          handleSubmitExam();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [isSubmitted]);
-
-  // 2. Audio Time Sync
-  useEffect(() => {
-    if (isSubmitted || !questions.length) return;
-    // Check if audio time corresponds to a specific question timestamp range
-    const syncedIndex = questions.findIndex(
-      (q) =>
-        q.audio_start_time !== undefined &&
-        q.audio_end_time !== undefined &&
-        audioCurrentTime >= q.audio_start_time &&
-        audioCurrentTime < q.audio_end_time
-    );
-
-    if (syncedIndex !== -1 && syncedIndex !== currentQuestionIndex) {
-      setCurrentQuestionIndex(syncedIndex);
+    if (audioRef.current) {
+      audioRef.current.volume = Math.min(1, volumeLevel);
     }
-  }, [audioCurrentTime, questions, isSubmitted]);
+  }, [volumeLevel, subject.audio_url]);
+
+  const handleVolumeChange = (vol: number) => {
+    setVolumeLevel(vol);
+    if (audioRef.current) {
+      audioRef.current.volume = vol;
+    }
+  };
 
   const toggleAudio = () => {
     if (!audioRef.current) return;
+    audioRef.current.volume = volumeLevel;
     if (isPlayingAudio) {
       audioRef.current.pause();
     } else {
-      audioRef.current.play();
+      audioRef.current.play().catch(() => {});
     }
     setIsPlayingAudio(!isPlayingAudio);
   };
@@ -119,8 +101,8 @@ export function CompositionExamPlayer({ subject, questions, studentId }: Composi
   const handleAudioEnded = () => {
     setIsPlayingAudio(false);
     toast({
-      title: "Audio terminé",
-      description: "L'écoute audio est terminée. Soumission automatique du sujet.",
+      title: "Fin du média de composition",
+      description: "Le sujet officiel est terminé. Validation automatique.",
     });
     handleSubmitExam();
   };
@@ -230,13 +212,21 @@ export function CompositionExamPlayer({ subject, questions, studentId }: Composi
 
   return (
     <div className={`space-y-6 ${isFullscreen ? "p-6 bg-background min-h-screen" : "max-w-5xl mx-auto"} animate-fade-in pb-12`}>
-      {/* Hidden Audio Player element */}
-      <audio
-        ref={audioRef}
-        src={subject.audio_url || "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"}
-        onTimeUpdate={handleAudioTimeUpdate}
-        onEnded={handleAudioEnded}
-      />
+      {/* Media Player element (Supports .mpg, .mp4 and .mp3) */}
+      <div className="w-full aspect-video max-h-[380px] bg-black rounded-3xl overflow-hidden border-2 border-[#F5A623] shadow-2xl relative">
+        <video
+          key={subject.audio_url}
+          ref={audioRef as any}
+          src={subject.audio_url}
+          controls
+          playsInline
+          className="w-full h-full object-contain"
+          onTimeUpdate={handleAudioTimeUpdate}
+          onEnded={handleAudioEnded}
+          onPlay={() => setIsPlayingAudio(true)}
+          onPause={() => setIsPlayingAudio(false)}
+        />
+      </div>
 
       {/* TOP HEADER CONTROLS BAR */}
       <div className="p-4 bg-[#0A1628] text-white rounded-3xl shadow-xl flex flex-wrap items-center justify-between gap-4 border-2 border-[#F5A623]">
@@ -258,22 +248,25 @@ export function CompositionExamPlayer({ subject, questions, studentId }: Composi
 
         {/* Audio Sync & Timer Controls */}
         <div className="flex items-center gap-3">
-          <Button
-            onClick={toggleAudio}
-            variant="outline"
-            size="sm"
-            className="border-white/20 text-white bg-white/10 hover:bg-white/20 rounded-xl gap-2 text-xs font-bold"
-          >
-            {isPlayingAudio ? (
-              <>
-                <Pause className="h-4 w-4 text-[#F5A623]" /> Audio en cours...
-              </>
-            ) : (
-              <>
-                <Play className="h-4 w-4 text-green-400" /> Écouter l&apos;audio
-              </>
-            )}
-          </Button>
+          {/* Volume Booster Control */}
+          <div className="flex items-center gap-1 bg-white/10 p-1 rounded-xl border border-white/20">
+            <Volume2 className="h-4 w-4 text-[#F5A623] ml-1 mr-0.5" />
+            {[0.5, 1, 1.5, 2].map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => handleVolumeChange(v)}
+                className={`px-2 py-0.5 text-xs font-bold rounded-lg transition-all ${
+                  volumeLevel === v
+                    ? "bg-[#F5A623] text-[#0A1628]"
+                    : "text-white/70 hover:text-white"
+                }`}
+                title={`Volume ${v * 100}%`}
+              >
+                {v * 100}%
+              </button>
+            ))}
+          </div>
 
           {/* Countdown Clock */}
           <div className="flex items-center gap-2 bg-red-500/20 text-red-300 px-3 py-1.5 rounded-xl border border-red-500/30 font-mono text-sm font-bold">
@@ -422,25 +415,30 @@ export function CompositionExamPlayer({ subject, questions, studentId }: Composi
             <Progress value={((currentQuestionIndex + 1) / questions.length) * 100} className="h-2 rounded-full" />
           </div>
 
-          {/* QUESTION CARD */}
+          {/* QUESTION CARD WITH AUDIO RESPONSE KEYPAD */}
           <Card className="border-2 border-border shadow-xl rounded-3xl overflow-hidden bg-white dark:bg-[#0A1628]">
             <CardHeader className="p-6 bg-muted/30 border-b flex flex-row items-center justify-between gap-4">
               <div>
-                <Badge className="bg-[#0A1628] text-white dark:bg-[#F5A623] dark:text-[#0A1628] font-bold text-xs">
-                  {currentQuestion?.question_type === "multiple"
-                    ? "☑ Choix Multiples"
-                    : currentQuestion?.question_type === "boolean"
-                    ? "○ Vrai / Faux"
-                    : "○ Choix Unique"}
-                </Badge>
-                <h2 className="text-xl font-extrabold text-foreground mt-2">
-                  {currentQuestionIndex + 1}. {currentQuestion?.question_text}
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-[#0A1628] text-white dark:bg-[#F5A623] dark:text-[#0A1628] font-extrabold text-xs">
+                    Question N° {currentQuestionIndex + 1} / {questions.length}
+                  </Badge>
+                  <Badge variant="outline" className="text-xs font-semibold">
+                    {currentQuestion?.question_type === "multiple"
+                      ? "☑ Choix Multiples (Sélectionnez plusieurs)"
+                      : currentQuestion?.question_type === "boolean"
+                      ? "○ Vrai / Faux"
+                      : "○ Choix Unique"}
+                  </Badge>
+                </div>
+                <h2 className="text-xl font-extrabold text-foreground mt-2 flex items-center gap-2">
+                  🎧 Écoutez l&apos;énoncé dans l&apos;audio et sélectionnez votre réponse :
                 </h2>
               </div>
             </CardHeader>
 
             <CardContent className="p-6 md:p-8 space-y-6">
-              {/* Scenario Image if available */}
+              {/* Image illustration if scenario image is provided */}
               {currentQuestion?.image_url && (
                 <div className="relative w-full h-64 sm:h-80 bg-black/5 rounded-2xl overflow-hidden border border-border flex items-center justify-center">
                   <Image
@@ -452,8 +450,8 @@ export function CompositionExamPlayer({ subject, questions, studentId }: Composi
                 </div>
               )}
 
-              {/* OPTIONS CHOICE LIST */}
-              <div className="space-y-3">
+              {/* RESPONSE CHOICE KEYPAD (A, B, C, D) */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-2">
                 {currentQuestion?.options.map((opt) => {
                   const isSelected = (answers[currentQuestion.id] || []).includes(opt.id);
 
@@ -463,40 +461,72 @@ export function CompositionExamPlayer({ subject, questions, studentId }: Composi
                         key={opt.id}
                         type="button"
                         onClick={() => handleMultipleSelect(currentQuestion.id, opt.id)}
-                        className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center gap-4 cursor-pointer ${
+                        className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer text-center ${
                           isSelected
-                            ? "bg-[#F5A623]/10 border-[#F5A623] text-foreground font-bold shadow-md"
-                            : "bg-background border-border hover:bg-muted/40 text-foreground"
+                            ? "bg-[#F5A623] text-[#0A1628] border-[#F5A623] font-extrabold shadow-gold scale-105"
+                            : "bg-background border-border hover:border-[#F5A623] text-foreground"
                         }`}
                       >
-                        <Checkbox checked={isSelected} className="h-5 w-5 border-2 border-[#F5A623]" />
-                        <span className="w-8 h-8 rounded-xl bg-[#0A1628] text-white flex items-center justify-center text-xs font-extrabold flex-shrink-0">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-black ${
+                          isSelected ? "bg-[#0A1628] text-white" : "bg-muted text-foreground"
+                        }`}>
                           {opt.label}
-                        </span>
-                        <span className="text-base font-medium flex-1">{opt.text}</span>
+                        </div>
+                        <span className="text-sm font-bold">Réponse {opt.label}</span>
                       </button>
                     );
                   }
 
-                  // Single choice or Boolean
+                  // Single Choice / Boolean
                   return (
                     <button
                       key={opt.id}
                       type="button"
                       onClick={() => handleSingleSelect(currentQuestion.id, opt.id)}
-                      className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center gap-4 cursor-pointer ${
+                      className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer text-center ${
                         isSelected
-                          ? "bg-[#0A1628] text-white border-[#0A1628] font-bold shadow-lg dark:bg-[#F5A623] dark:text-[#0A1628] dark:border-[#F5A623]"
-                          : "bg-background border-border hover:bg-muted/40 text-foreground"
+                          ? "bg-[#0A1628] text-white border-[#0A1628] font-extrabold shadow-xl scale-105 dark:bg-[#F5A623] dark:text-[#0A1628] dark:border-[#F5A623]"
+                          : "bg-background border-border hover:border-[#0A1628] text-foreground"
                       }`}
                     >
-                      <span className="w-8 h-8 rounded-xl bg-[#F5A623] text-[#0A1628] dark:bg-[#0A1628] dark:text-white flex items-center justify-center text-xs font-extrabold flex-shrink-0">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-black ${
+                        isSelected ? "bg-[#F5A623] text-[#0A1628] dark:bg-[#0A1628] dark:text-white" : "bg-muted text-foreground"
+                      }`}>
                         {opt.label}
-                      </span>
-                      <span className="text-base font-semibold flex-1">{opt.text}</span>
+                      </div>
+                      <span className="text-sm font-bold">Réponse {opt.label}</span>
                     </button>
                   );
                 })}
+              </div>
+
+              {/* QUESTIONS MATRIX GRID STEPPER (1 - 20) */}
+              <div className="pt-4 border-t border-border space-y-2">
+                <p className="text-xs font-bold text-muted-foreground uppercase">
+                  Aperçu de vos réponses ({Object.keys(answers).length} / {questions.length} répondue(s)) :
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {questions.map((q, idx) => {
+                    const hasAnswer = (answers[q.id] || []).length > 0;
+                    const isCurrent = idx === currentQuestionIndex;
+                    return (
+                      <button
+                        key={q.id || idx}
+                        type="button"
+                        onClick={() => setCurrentQuestionIndex(idx)}
+                        className={`w-9 h-9 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center border cursor-pointer ${
+                          isCurrent
+                            ? "ring-2 ring-offset-1 ring-[#F5A623] bg-[#0A1628] text-white"
+                            : hasAnswer
+                            ? "bg-green-100 text-green-700 border-green-300 dark:bg-green-950/60 dark:text-green-400"
+                            : "bg-muted/40 text-muted-foreground border-border hover:bg-muted"
+                        }`}
+                      >
+                        {idx + 1}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* NAVIGATION & SUBMISSION FOOTER */}
@@ -515,7 +545,7 @@ export function CompositionExamPlayer({ subject, questions, studentId }: Composi
                     onClick={() => setCurrentQuestionIndex((prev) => prev + 1)}
                     className="bg-[#0A1628] text-white hover:bg-[#1E4070] rounded-2xl font-bold gap-2 px-6"
                   >
-                    Suivant <ArrowRight className="h-4 w-4" />
+                    Question suivante <ArrowRight className="h-4 w-4" />
                   </Button>
                 ) : (
                   <Button

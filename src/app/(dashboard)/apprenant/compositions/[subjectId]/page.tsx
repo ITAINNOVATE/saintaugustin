@@ -52,15 +52,18 @@ export default async function SubjectExamPage({ params }: SubjectExamPageProps) 
 
   // Demo Fallback Subject & Questions generator if none found in DB
   if (!subject) {
+    const match = subjectId.match(/\d+/);
+    const numStr = match ? match[0].padStart(2, "0") : "01";
+
     subject = {
       id: subjectId,
-      title: "Sujet Officiel N°1 — Signalisation & Priorités",
+      title: `Sujet Officiel N°${numStr} — Examen Théorique`,
       permit_category: "B",
       duration_minutes: 20,
       total_questions: 20,
       pass_score: 16,
       difficulty: "Moyen",
-      audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+      audio_url: `/SUJETS%20FRANCAIS/sujet_${numStr}.mpg`,
       can_go_back: true,
       show_explanations: true,
       is_published: true,

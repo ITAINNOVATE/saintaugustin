@@ -53,53 +53,28 @@ export default async function CompositionsPage() {
     .eq("student_id", studentId)
     .order("completed_at", { ascending: false });
 
-  // Demo Fallback Subjects if none in DB
-  const defaultSubjects = [
-    {
-      id: "subj-1",
-      title: "Sujet Officiel N°1 — Signalisation & Priorités",
-      permit_category: "B" as const,
+  // Generate all 46 official subjects from public/SUJETS FRANCAIS/
+  const officialSubjects = Array.from({ length: 46 }, (_, i) => {
+    const numStr = (i + 1).toString().padStart(2, "0");
+    const categories: ("A" | "B" | "C" | "D")[] = ["B", "B", "A", "C", "D"];
+    const difficulties: ("Facile" | "Moyen" | "Difficile")[] = ["Moyen", "Difficile", "Facile"];
+    return {
+      id: `sujet-${numStr}`,
+      title: `Sujet Officiel N°${numStr} — Examen Théorique`,
+      permit_category: categories[i % categories.length],
       duration_minutes: 20,
       total_questions: 20,
       pass_score: 16,
-      difficulty: "Moyen" as const,
-      audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+      difficulty: difficulties[i % difficulties.length],
+      audio_url: `/SUJETS%20FRANCAIS/sujet_${numStr}.mpg`,
       can_go_back: true,
       show_explanations: true,
       is_published: true,
       created_at: new Date().toISOString(),
-    },
-    {
-      id: "subj-2",
-      title: "Sujet Officiel N°2 — Croisements & Dépassements",
-      permit_category: "B" as const,
-      duration_minutes: 20,
-      total_questions: 20,
-      pass_score: 16,
-      difficulty: "Difficile" as const,
-      audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-      can_go_back: true,
-      show_explanations: true,
-      is_published: true,
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: "subj-3",
-      title: "Sujet Officiel N°3 — Code Général & Éco-Conduite",
-      permit_category: "B" as const,
-      duration_minutes: 15,
-      total_questions: 15,
-      pass_score: 12,
-      difficulty: "Facile" as const,
-      audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-      can_go_back: true,
-      show_explanations: true,
-      is_published: true,
-      created_at: new Date().toISOString(),
-    },
-  ];
+    };
+  });
 
-  const displaySubjects = subjects && subjects.length > 0 ? subjects : defaultSubjects;
+  const displaySubjects = subjects && subjects.length > 0 ? subjects : officialSubjects;
 
   return (
     <DashboardLayout userRole="apprenant" userName={userName} pageTitle="Compositions E-Exam">
