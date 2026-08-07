@@ -94,15 +94,29 @@ export function CompositionExamPlayer({ subject, questions, studentId }: Composi
 
   const handleAudioTimeUpdate = () => {
     if (!audioRef.current) return;
-    setAudioCurrentTime(audioRef.current.currentTime);
-    setAudioDuration(audioRef.current.duration || 0);
+    const currentTime = audioRef.current.currentTime;
+    const duration = audioRef.current.duration || 0;
+    setAudioCurrentTime(currentTime);
+    setAudioDuration(duration);
+
+    // Automatic Question Advancement Engine
+    if (duration > 0 && questions.length > 0 && !isSubmitted) {
+      const durationPerQuestion = duration / questions.length;
+      const calculatedIndex = Math.min(
+        questions.length - 1,
+        Math.floor(currentTime / durationPerQuestion)
+      );
+      if (calculatedIndex !== currentQuestionIndex && calculatedIndex >= 0) {
+        setCurrentQuestionIndex(calculatedIndex);
+      }
+    }
   };
 
   const handleAudioEnded = () => {
     setIsPlayingAudio(false);
     toast({
-      title: "Fin du média de composition",
-      description: "Le sujet officiel est terminé. Validation automatique.",
+      title: "Épreuve Terminée",
+      description: "La vidéo du sujet officiel est terminée. Correction automatique effectuée.",
     });
     handleSubmitExam();
   };
@@ -429,6 +443,9 @@ export function CompositionExamPlayer({ subject, questions, studentId }: Composi
                 <div className="flex items-center gap-2">
                   <Badge className="bg-[#0A1628] text-white dark:bg-[#F5A623] dark:text-[#0A1628] font-extrabold text-xs">
                     Question N° {currentQuestionIndex + 1} / {questions.length}
+                  </Badge>
+                  <Badge className="bg-[#00C9A7] text-white font-extrabold text-[11px] flex items-center gap-1 animate-pulse">
+                    ⚡ Avancement Vidéo Automatique
                   </Badge>
                   <Badge variant="outline" className="text-xs font-semibold">
                     {currentQuestion?.question_type === "multiple"
