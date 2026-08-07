@@ -19,7 +19,7 @@ const ROLE_HOME: Record<string, string> = {
   apprenant: "/apprenant/cours",
 };
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -84,11 +84,11 @@ export async function middleware(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (!profile || !profile.is_active) {
+    if (!profile || !(profile as any).is_active) {
       await supabase.auth.signOut();
       return NextResponse.redirect(new URL("/login?error=account_inactive", request.url));
     }
-    role = profile.role as string;
+    role = (profile as any).role as string;
   }
 
   const allowedPaths = ROLE_ROUTES[role] || [];
