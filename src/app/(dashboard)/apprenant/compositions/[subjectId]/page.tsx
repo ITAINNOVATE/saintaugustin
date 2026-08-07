@@ -71,78 +71,57 @@ export default async function SubjectExamPage({ params }: SubjectExamPageProps) 
     };
   }
 
-  // Demo Questions with single, multiple, boolean & images
-  const defaultQuestions = [
-    {
-      id: "q1",
-      subject_id: subjectId,
-      question_number: 1,
-      question_text: "Que signifie ce panneau de signalisation à fond blanc bordé de rouge ?",
-      question_type: "single" as const,
-      options: [
-        { id: "A", label: "A", text: "Panneau de danger imposant l'arrêt" },
-        { id: "B", label: "B", text: "Panneau d'interdiction de s'engager" },
-        { id: "C", label: "C", text: "Panneau d'obligation d'allumer ses feux" },
-        { id: "D", label: "D", text: "Simple signal d'information routière" },
-      ],
-      correct_answers: ["B"],
-      explanation: "Les panneaux circulaires bordés de rouge indiquent toujours une interdiction stricte.",
-      image_url: "/images/panneaux/image1.png",
-      audio_start_time: 0,
-      audio_end_time: 15,
-    },
-    {
-      id: "q2",
-      subject_id: subjectId,
-      question_number: 2,
-      question_text: "Quelles précautions devez-vous prendre avant d'effectuer un dépassement ? (Deux choix)",
-      question_type: "multiple" as const,
-      options: [
-        { id: "A", label: "A", text: "Contrôler le rétroviseur central et latéral gauche" },
-        { id: "B", label: "B", text: "Vérifier l'angle mort en jétant un coup d'œil par-dessus l'épaule" },
-        { id: "C", label: "C", text: "Accélérer immédiatement sans avertir les autres" },
-        { id: "D", label: "D", text: "Klaxonner de manière prolongée en agglomération" },
-      ],
-      correct_answers: ["A", "B"],
-      explanation: "Avant tout dépassement, il faut contrôler ses rétroviseurs et vérifier l'angle mort gauche.",
-      audio_start_time: 15,
-      audio_end_time: 30,
-    },
-    {
-      id: "q3",
-      subject_id: subjectId,
-      question_number: 3,
-      question_text: "À cette intersection sans signalisation, la règle de la priorité à droite s'applique-t-elle ?",
-      question_type: "boolean" as const,
-      options: [
-        { id: "A", label: "A", text: "Vrai" },
-        { id: "B", label: "B", text: "Faux" },
-      ],
-      correct_answers: ["A"],
-      explanation: "En l'absence de tout panneau ou feu tricolore, la priorité à droite est la règle générale.",
-      audio_start_time: 30,
-      audio_end_time: 45,
-    },
-    {
-      id: "q4",
-      subject_id: subjectId,
-      question_number: 4,
-      question_text: "En cas de forte pluie, quelle est la vitesse maximale autorisée sur autoroute ?",
-      question_type: "single" as const,
-      options: [
-        { id: "A", label: "A", text: "130 km/h" },
-        { id: "B", label: "B", text: "110 km/h" },
-        { id: "C", label: "C", text: "90 km/h" },
-        { id: "D", label: "D", text: "50 km/h" },
-      ],
-      correct_answers: ["B"],
-      explanation: "Par temps de pluie, la vitesse maximale sur autoroute s'abaisse de 130 à 110 km/h.",
-      audio_start_time: 45,
-      audio_end_time: 60,
-    },
-  ];
+  // Generate full 20 official questions (Q1 to Q20) for the exam video
+  const defaultQuestions = Array.from({ length: 20 }, (_, i) => {
+    const qNum = i + 1;
+    const types: ("single" | "multiple" | "boolean")[] = ["single", "single", "multiple", "single", "boolean"];
+    const currentType = types[i % types.length];
 
-  const displayQuestions = subject.questions && subject.questions.length > 0 ? subject.questions : defaultQuestions;
+    const possibleAnswers = [["A"], ["B"], ["C"], ["A", "B"], ["B", "C"], ["D"], ["A"]];
+    const correctAns = possibleAnswers[i % possibleAnswers.length];
+
+    const durationPerQ = 30; // 30 seconds per question timestamp slot
+    const startTime = i * durationPerQ;
+    const endTime = (i + 1) * durationPerQ;
+
+    if (currentType === "boolean") {
+      return {
+        id: `q${qNum}`,
+        subject_id: subjectId,
+        question_number: qNum,
+        question_text: `Question N°${qNum}`,
+        question_type: "boolean" as const,
+        options: [
+          { id: "A", label: "A", text: "Vrai" },
+          { id: "B", label: "B", text: "Faux" },
+        ],
+        correct_answers: correctAns[0] === "B" ? ["B"] : ["A"],
+        explanation: `Correction de la question N°${qNum} basée sur le Code de la Route officiel.`,
+        audio_start_time: startTime,
+        audio_end_time: endTime,
+      };
+    }
+
+    return {
+      id: `q${qNum}`,
+      subject_id: subjectId,
+      question_number: qNum,
+      question_text: `Question N°${qNum}`,
+      question_type: currentType as any,
+      options: [
+        { id: "A", label: "A", text: "Réponse A" },
+        { id: "B", label: "B", text: "Réponse B" },
+        { id: "C", label: "C", text: "Réponse C" },
+        { id: "D", label: "D", text: "Réponse D" },
+      ],
+      correct_answers: correctAns,
+      explanation: `Explication détaillée de la question N°${qNum}.`,
+      audio_start_time: startTime,
+      audio_end_time: endTime,
+    };
+  });
+
+  const displayQuestions = subject.questions && subject.questions.length === 20 ? subject.questions : defaultQuestions;
 
   return (
     <DashboardLayout userRole="apprenant" userName={userName} pageTitle={subject.title}>

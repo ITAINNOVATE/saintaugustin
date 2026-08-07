@@ -107,7 +107,14 @@ export function CompositionExamPlayer({ subject, questions, studentId }: Composi
     handleSubmitExam();
   };
 
-  // Selection Handlers (Auto-saving after selection)
+  const goToQuestion = (idx: number) => {
+    if (idx < 0 || idx >= questions.length) return;
+    setCurrentQuestionIndex(idx);
+    const targetQ = questions[idx];
+    if (targetQ && targetQ.audio_start_time !== undefined && audioRef.current) {
+      audioRef.current.currentTime = targetQ.audio_start_time;
+    }
+  };
   const handleSingleSelect = (questionId: string, optionId: string) => {
     if (isSubmitted) return;
     setAnswers((prev) => ({
@@ -513,7 +520,7 @@ export function CompositionExamPlayer({ subject, questions, studentId }: Composi
                       <button
                         key={q.id || idx}
                         type="button"
-                        onClick={() => setCurrentQuestionIndex(idx)}
+                        onClick={() => goToQuestion(idx)}
                         className={`w-9 h-9 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center border cursor-pointer ${
                           isCurrent
                             ? "ring-2 ring-offset-1 ring-[#F5A623] bg-[#0A1628] text-white"
@@ -533,7 +540,7 @@ export function CompositionExamPlayer({ subject, questions, studentId }: Composi
               <div className="flex items-center justify-between pt-6 border-t border-border">
                 <Button
                   variant="outline"
-                  onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
+                  onClick={() => goToQuestion(currentQuestionIndex - 1)}
                   disabled={currentQuestionIndex === 0 || !subject.can_go_back}
                   className="rounded-2xl gap-2 font-bold"
                 >
@@ -542,7 +549,7 @@ export function CompositionExamPlayer({ subject, questions, studentId }: Composi
 
                 {currentQuestionIndex < questions.length - 1 ? (
                   <Button
-                    onClick={() => setCurrentQuestionIndex((prev) => prev + 1)}
+                    onClick={() => goToQuestion(currentQuestionIndex + 1)}
                     className="bg-[#0A1628] text-white hover:bg-[#1E4070] rounded-2xl font-bold gap-2 px-6"
                   >
                     Question suivante <ArrowRight className="h-4 w-4" />
