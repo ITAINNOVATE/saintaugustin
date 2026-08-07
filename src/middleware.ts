@@ -19,7 +19,7 @@ const ROLE_HOME: Record<string, string> = {
   apprenant: "/apprenant/cours",
 };
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
