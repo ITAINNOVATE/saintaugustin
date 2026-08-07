@@ -25,8 +25,8 @@ export default async function AdminCompositionsPage() {
       .single();
 
     if (profile) {
-      userName = `${profile.first_name || ""} ${profile.last_name || ""}`;
-      userRole = profile.role;
+      userName = `${(profile as any).first_name || ""} ${(profile as any).last_name || ""}`;
+      userRole = (profile as any).role || "admin";
     }
   }
 

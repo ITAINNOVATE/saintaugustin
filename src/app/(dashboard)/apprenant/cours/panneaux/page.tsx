@@ -26,8 +26,8 @@ export default async function PanneauxPage() {
       .single();
 
     if (profile) {
-      userName = `${profile.first_name || ""} ${profile.last_name || ""}`;
-      userRole = profile.role || "apprenant";
+      userName = `${(profile as any).first_name || ""} ${(profile as any).last_name || ""}`;
+      userRole = (profile as any).role || "apprenant";
     }
   }
 

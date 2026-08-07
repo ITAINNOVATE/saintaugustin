@@ -29,7 +29,7 @@ export default async function SubjectExamPage({ params }: SubjectExamPageProps) 
       .single();
 
     if (profile) {
-      userName = `${profile.first_name || ""} ${profile.last_name || ""}`;
+      userName = `${(profile as any).first_name || ""} ${(profile as any).last_name || ""}`;
     }
 
     const { data: student } = await supabase
@@ -39,7 +39,7 @@ export default async function SubjectExamPage({ params }: SubjectExamPageProps) 
       .single();
 
     if (student) {
-      studentId = student.id;
+      studentId = (student as any).id;
     }
   }
 

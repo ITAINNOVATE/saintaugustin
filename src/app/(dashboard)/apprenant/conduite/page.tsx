@@ -27,8 +27,8 @@ export default async function ApprenantConduitePage() {
       .single();
 
     if (profile) {
-      userName = `${profile.first_name || ""} ${profile.last_name || ""}`;
-      userRole = profile.role;
+      userName = `${(profile as any).first_name || ""} ${(profile as any).last_name || ""}`;
+      userRole = (profile as any).role || "apprenant";
     }
 
     const { data: student } = await supabase
@@ -38,8 +38,8 @@ export default async function ApprenantConduitePage() {
       .single();
 
     if (student) {
-      studentId = student.id;
-      matricule = student.matricule;
+      studentId = (student as any).id;
+      matricule = (student as any).matricule;
     }
   }
 
