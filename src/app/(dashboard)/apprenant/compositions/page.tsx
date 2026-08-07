@@ -66,7 +66,7 @@ export default async function CompositionsPage() {
       total_questions: 20,
       pass_score: 16,
       difficulty: difficulties[i % difficulties.length],
-      audio_url: `/SUJETS%20FRANCAIS/sujet_${numStr}.mpg`,
+      audio_url: `/SUJETS%20FRANCAIS/sujet_${numStr}.mp4`,
       can_go_back: true,
       show_explanations: true,
       is_published: true,
