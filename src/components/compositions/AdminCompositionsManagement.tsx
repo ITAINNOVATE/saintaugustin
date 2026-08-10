@@ -38,6 +38,8 @@ export function AdminCompositionsManagement({ initialSubjects, adminId }: AdminC
   const [subjects, setSubjects] = useState<CompositionSubject[]>(initialSubjects);
   const [showSubjectDialog, setShowSubjectDialog] = useState(false);
   const [showQuestionDialog, setShowQuestionDialog] = useState(false);
+  const [showGridDialog, setShowGridDialog] = useState(false);
+  const [gridAnswers, setGridAnswers] = useState<Record<number, string[]>>({});
   const [selectedSubject, setSelectedSubject] = useState<CompositionSubject | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -184,6 +186,68 @@ export function AdminCompositionsManagement({ initialSubjects, adminId }: AdminC
     });
   };
 
+  const handleOpenGrid = (subj: CompositionSubject) => {
+    setSelectedSubject(subj);
+    const initialGrid: Record<number, string[]> = {};
+    for (let i = 1; i <= (subj.total_questions || 20); i++) {
+      initialGrid[i] = [];
+    }
+    // populate existing answers if any
+    if (subj.questions) {
+      subj.questions.forEach((q) => {
+        initialGrid[q.question_number] = q.correct_answers || [];
+      });
+    }
+    setGridAnswers(initialGrid);
+    setShowGridDialog(true);
+  };
+
+  const handleSaveGrid = async () => {
+    if (!selectedSubject) return;
+    startTransition(async () => {
+      const payloadQuestions = Object.keys(gridAnswers).map((qNumStr) => {
+        const qNum = Number(qNumStr);
+        const correct = gridAnswers[qNum];
+        return {
+          subject_id: selectedSubject.id,
+          question_number: qNum,
+          question_text: `Question ${qNum}`,
+          question_type: correct.length > 1 ? "multiple" : "single",
+          options: [
+            { id: "A", label: "A", text: "Option A" },
+            { id: "B", label: "B", text: "Option B" },
+            { id: "C", label: "C", text: "Option C" },
+            { id: "D", label: "D", text: "Option D" },
+          ],
+          correct_answers: correct,
+          audio_start_time: (qNum - 1) * 15,
+          audio_end_time: qNum * 15,
+        };
+      });
+
+      const { error } = await (supabase.from("composition_questions") as any).upsert(payloadQuestions, { onConflict: 'subject_id,question_number' });
+
+      if (!error) {
+        toast({ title: "Grille de correction enregistrée !" });
+        setSubjects((prev) =>
+          prev.map((s) => {
+            if (s.id === selectedSubject.id) {
+              const mergedQuestions = payloadQuestions.map(p => ({
+                id: `q-${p.subject_id}-${p.question_number}`,
+                ...p
+              }));
+              return { ...s, questions: mergedQuestions as any };
+            }
+            return s;
+          })
+        );
+        setShowGridDialog(false);
+      } else {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      }
+    });
+  };
+
   const handleDeleteSubject = async (subjectId: string) => {
     if (!confirm("Voulez-vous vraiment supprimer ce sujet ?")) return;
     startTransition(async () => {
@@ -265,39 +329,21 @@ export function AdminCompositionsManagement({ initialSubjects, adminId }: AdminC
                 <Button
                   variant="outline"
                   size="icon"
+                  onClick={() => handleOpenGrid(subj)}
+                  title="Grille de correction"
+                  className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
                   onClick={() => handleDeleteSubject(subj.id)}
                   title="Supprimer le sujet"
                   className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
-                <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setSelectedSubject(subj);
-                  setQuestionForm({
-                    question_text: "",
-                    question_type: "single",
-                    image_url: "",
-                    explanation: "",
-                    audio_start_time: (subj.questions?.length || 0) * 15,
-                    audio_end_time: ((subj.questions?.length || 0) + 1) * 15,
-                    optA: "Option A",
-                    optB: "Option B",
-                    optC: "Option C",
-                    optD: "Option D",
-                    correctA: true,
-                    correctB: false,
-                    correctC: false,
-                    correctD: false,
-                  });
-                  setShowQuestionDialog(true);
-                }}
-                className="rounded-xl text-xs font-bold gap-1 h-8"
-              >
-                <Plus className="h-3.5 w-3.5" /> Question
-              </Button>
               </div>
             </CardHeader>
 
@@ -592,6 +638,51 @@ export function AdminCompositionsManagement({ initialSubjects, adminId }: AdminC
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* FAST CORRECTION GRID DIALOG */}
+      <Dialog open={showGridDialog} onOpenChange={setShowGridDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Grille de Correction Rapide</DialogTitle>
+            <CardDescription>Cochez directement les bonnes réponses (A, B, C, D) pour les {(selectedSubject?.total_questions || 20)} questions du {selectedSubject?.title}.</CardDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
+            {Object.keys(gridAnswers).map((qNumStr) => {
+              const qNum = Number(qNumStr);
+              return (
+                <div key={qNum} className="flex flex-col gap-2 p-3 bg-muted/40 rounded-xl border">
+                  <span className="text-xs font-bold text-muted-foreground">Question {qNum}</span>
+                  <div className="flex gap-2">
+                    {["A", "B", "C", "D"].map((opt) => (
+                      <label key={opt} className="flex flex-col items-center gap-1 cursor-pointer">
+                        <span className="text-xs font-medium">{opt}</span>
+                        <Checkbox
+                          checked={gridAnswers[qNum]?.includes(opt)}
+                          onCheckedChange={(checked) => {
+                            setGridAnswers((prev) => {
+                              const curr = prev[qNum] || [];
+                              if (checked) return { ...prev, [qNum]: [...curr, opt] };
+                              return { ...prev, [qNum]: curr.filter((c) => c !== opt) };
+                            });
+                          }}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex justify-end gap-3 pt-6 mt-6 border-t">
+            <Button variant="outline" onClick={() => setShowGridDialog(false)}>Annuler</Button>
+            <Button onClick={handleSaveGrid} disabled={isPending} className="bg-[#F5A623] text-[#0A1628] hover:bg-[#F9CC74] font-bold">
+              {isPending ? "Enregistrement..." : "Enregistrer la Grille"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
