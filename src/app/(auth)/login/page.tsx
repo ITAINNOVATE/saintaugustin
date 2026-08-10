@@ -41,15 +41,7 @@ export default function LoginPage() {
       });
 
       if (signInError) {
-        if (signInError.message.includes("Invalid login credentials")) {
-          setError("Email ou mot de passe incorrect.");
-        } else if (signInError.message.includes("Email not confirmed")) {
-          setError("Votre compte n'est pas encore confirmé dans Supabase.");
-        } else if (signInError.message.includes("Auth session or user missing") || signInError.message.includes("User not found")) {
-          setError("Ce compte (admin@saintaugustin.com) n'existe pas encore dans Supabase.");
-        } else {
-          setError(signInError.message || "Une erreur est survenue. Veuillez réessayer.");
-        }
+        setError(signInError.message || "Email ou mot de passe incorrect.");
         return;
       }
 
