@@ -22,24 +22,24 @@ export default async function SubjectExamPage({ params }: SubjectExamPageProps) 
   let studentId = "demo-student-id";
 
   if (user) {
-    const { data: profile } = await supabase
+    const { data: profile } = (await supabase
       .from("profiles")
       .select("first_name, last_name")
       .eq("id", user.id)
-      .single();
+      .single()) as { data: any };
 
     if (profile) {
-      userName = `${(profile as any).first_name || ""} ${(profile as any).last_name || ""}`;
+      userName = `${profile.first_name || ""} ${profile.last_name || ""}`;
     }
 
-    const { data: student } = await supabase
+    const { data: student } = (await supabase
       .from("students")
       .select("id")
       .eq("user_id", user.id)
-      .single();
+      .single()) as { data: any };
 
     if (student) {
-      studentId = (student as any).id;
+      studentId = student.id;
     }
   }
 

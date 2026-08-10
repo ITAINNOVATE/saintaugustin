@@ -18,15 +18,15 @@ export default async function AdminCompositionsPage() {
   let userName = "Administrateur";
 
   if (user) {
-    const { data: profile } = await supabase
+    const { data: profile } = (await supabase
       .from("profiles")
       .select("first_name, last_name, role")
       .eq("id", user.id)
-      .single();
+      .single()) as { data: any };
 
     if (profile) {
-      userName = `${(profile as any).first_name || ""} ${(profile as any).last_name || ""}`;
-      userRole = (profile as any).role || "admin";
+      userName = `${profile.first_name || ""} ${profile.last_name || ""}`;
+      userRole = profile.role || "admin";
     }
   }
 

@@ -20,26 +20,26 @@ export default async function ApprenantConduitePage() {
   let matricule = "STD-2026-001";
 
   if (user) {
-    const { data: profile } = await supabase
+    const { data: profile } = (await supabase
       .from("profiles")
       .select("first_name, last_name, role")
       .eq("id", user.id)
-      .single();
+      .single()) as { data: any };
 
     if (profile) {
-      userName = `${(profile as any).first_name || ""} ${(profile as any).last_name || ""}`;
-      userRole = (profile as any).role || "apprenant";
+      userName = `${profile.first_name || ""} ${profile.last_name || ""}`;
+      userRole = profile.role || "apprenant";
     }
 
-    const { data: student } = await supabase
+    const { data: student } = (await supabase
       .from("students")
       .select("id, matricule")
       .eq("user_id", user.id)
-      .single();
+      .single()) as { data: any };
 
     if (student) {
-      studentId = (student as any).id;
-      matricule = (student as any).matricule;
+      studentId = student.id;
+      matricule = student.matricule;
     }
   }
 
