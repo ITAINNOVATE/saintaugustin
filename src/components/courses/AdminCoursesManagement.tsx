@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
 import { BookOpen, Plus, Edit, Trash2, Eye, EyeOff, ChevronRight, ChevronDown, FileText, Play, Music, Image, GripVertical } from "lucide-react";
+import Link from "next/link";
 
 interface AdminCoursesManagementProps {
   courses: any[];
