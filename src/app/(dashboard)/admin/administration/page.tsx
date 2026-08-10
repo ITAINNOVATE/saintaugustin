@@ -15,11 +15,13 @@ export default async function AdministrationPage() {
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
+  const { data } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .single();
+    
+  const profile = data as any;
 
   // Seul l'administrateur suprême a accès à cette page
   if (!profile || profile.role !== "admin") {
@@ -38,7 +40,7 @@ export default async function AdministrationPage() {
       userName={`${profile.first_name} ${profile.last_name}`} 
       pageTitle="Administration Générale"
     >
-      <AdminUsersManagement profiles={allProfiles || []} currentUserId={user.id} />
+      <AdminUsersManagement profiles={(allProfiles as any) || []} currentUserId={user.id} />
     </DashboardLayout>
   );
 }
