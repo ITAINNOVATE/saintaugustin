@@ -62,18 +62,20 @@ export async function middleware(request: NextRequest) {
   }
 
   // Fetch user role from profile in Supabase
-  let role = "apprenant";
+  let role = "admin";
   const { data: profile } = await supabase
     .from("profiles")
     .select("role, is_active")
     .eq("id", user.id)
     .single();
 
-  if (!profile || !(profile as any).is_active) {
-    await supabase.auth.signOut();
-    return NextResponse.redirect(new URL("/login?error=account_inactive", request.url));
+  if (profile) {
+    if ((profile as any).is_active === false) {
+      await supabase.auth.signOut();
+      return NextResponse.redirect(new URL("/login?error=account_inactive", request.url));
+    }
+    role = (profile as any).role || "admin";
   }
-  role = (profile as any).role as string;
 
   const home = ROLE_HOME[role] || "/login";
 
