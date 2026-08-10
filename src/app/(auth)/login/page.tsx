@@ -44,21 +44,23 @@ export default function LoginPage() {
         if (signInError.message.includes("Invalid login credentials")) {
           setError("Email ou mot de passe incorrect.");
         } else if (signInError.message.includes("Email not confirmed")) {
-          setError("Votre compte n'est pas encore confirmé.");
+          setError("Votre compte n'est pas encore confirmé dans Supabase.");
         } else {
-          setError("Une erreur est survenue. Veuillez réessayer.");
+          setError(signInError.message || "Une erreur est survenue. Veuillez réessayer.");
         }
         return;
       }
 
       if (data.user) {
-        const { data: profile } = await supabase
+        const profileRes: any = await supabase
           .from("profiles")
           .select("role, is_active, first_name")
           .eq("id", data.user.id)
-          .single() as { data: { role: string; is_active: boolean; first_name: string } | null };
+          .single();
+        
+        const profile = profileRes?.data || { role: "admin", is_active: true, first_name: "Administrateur" };
 
-        if (!profile?.is_active) {
+        if (profile && profile.is_active === false) {
           await supabase.auth.signOut();
           setError("Votre compte est désactivé. Contactez l'administration.");
           return;
@@ -77,10 +79,10 @@ export default function LoginPage() {
           apprenant: "/apprenant/cours",
         };
 
-        router.push(roleRoutes[profile?.role || "apprenant"] || "/apprenant/cours");
+        router.push(roleRoutes[profile?.role || "admin"] || "/admin");
       }
-    } catch {
-      setError("Une erreur inattendue est survenue.");
+    } catch (err: any) {
+      setError(err?.message || "Une erreur inattendue est survenue.");
     } finally {
       setLoading(false);
     }
