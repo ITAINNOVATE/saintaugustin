@@ -19,15 +19,16 @@ export default async function PanneauxPage() {
   let userRole = "apprenant";
 
   if (user) {
-    const { data: profile } = await supabase
+    const profileRes: any = await supabase
       .from("profiles")
       .select("first_name, last_name, role")
       .eq("id", user.id)
       .single();
+    const profile = profileRes?.data;
 
     if (profile) {
-      userName = `${(profile as any).first_name || ""} ${(profile as any).last_name || ""}`;
-      userRole = (profile as any).role || "apprenant";
+      userName = `${profile.first_name || ""} ${profile.last_name || ""}`;
+      userRole = profile.role || "apprenant";
     }
   }
 
