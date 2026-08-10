@@ -37,41 +37,29 @@ export default async function AdminCompositionsPage() {
     .select("*, questions(*)")
     .order("created_at", { ascending: false });
 
-  // Default initial demo subjects if database is empty
-  const defaultSubjects = [
-    {
-      id: "subj-1",
-      title: "Sujet Officiel N°1 — Signalisation & Priorités",
-      permit_category: "B" as const,
+  // Generate all 46 official subjects from public/SUJETS FRANCAIS/
+  const officialSubjects = Array.from({ length: 46 }, (_, i) => {
+    const numStr = (i + 1).toString().padStart(2, "0");
+    const categories: ("A" | "B" | "C" | "D")[] = ["B", "B", "A", "C", "D"];
+    const difficulties: ("Facile" | "Moyen" | "Difficile")[] = ["Moyen", "Difficile", "Facile"];
+    return {
+      id: `sujet-${numStr}`,
+      title: `Sujet Officiel N°${numStr} — Examen Théorique`,
+      permit_category: categories[i % categories.length],
       duration_minutes: 20,
       total_questions: 20,
       pass_score: 16,
-      difficulty: "Moyen" as const,
-      audio_url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+      difficulty: difficulties[i % difficulties.length],
+      audio_url: `/SUJETS%20FRANCAIS/sujet_${numStr}.mp4`,
       can_go_back: true,
       show_explanations: true,
       is_published: true,
       created_at: new Date().toISOString(),
-      questions: [
-        {
-          id: "q1",
-          subject_id: "subj-1",
-          question_number: 1,
-          question_text: "Que signifie ce panneau de signalisation ?",
-          question_type: "single" as const,
-          options: [
-            { id: "A", label: "A", text: "Signal de danger" },
-            { id: "B", label: "B", text: "Panneau d'interdiction" },
-          ],
-          correct_answers: ["B"],
-          audio_start_time: 0,
-          audio_end_time: 15,
-        },
-      ],
-    },
-  ];
+      questions: [],
+    };
+  });
 
-  const displaySubjects = subjects && subjects.length > 0 ? subjects : defaultSubjects;
+  const displaySubjects = subjects && subjects.length > 0 ? subjects : officialSubjects;
 
   return (
     <DashboardLayout userRole={userRole as any} userName={userName} pageTitle="Gestion des Compositions">
