@@ -34,7 +34,7 @@ export default async function PanneauxPage() {
 
   return (
     <DashboardLayout userRole={userRole as any} userName={userName} pageTitle="Lecture des Panneaux">
-      <PanneauxViewer />
+      <PanneauxViewer userRole={userRole as any} />
     </DashboardLayout>
   );
 }

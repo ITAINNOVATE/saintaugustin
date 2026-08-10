@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   ChevronLeft,
   ChevronRight,
@@ -21,9 +23,15 @@ import {
   Award,
   Volume2,
   VolumeX,
+  Edit3,
+  PlusCircle,
+  Save,
+  Trash2,
 } from "lucide-react";
 import panneauxData from "@/data/panneaux.json";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import type { UserRole } from "@/types/database";
 
 interface Panneau {
   id: number;
@@ -33,39 +41,67 @@ interface Panneau {
   image: string;
 }
 
-export function PanneauxViewer() {
-  const panels: Panneau[] = panneauxData;
+interface PanneauxViewerProps {
+  userRole?: UserRole;
+}
+
+const LOCAL_STORAGE_KEY = "saint_augustin_panneaux_custom";
+
+export function PanneauxViewer({ userRole }: PanneauxViewerProps) {
+  const [panels, setPanels] = useState<Panneau[]>(panneauxData);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
+  // Admin edit / add modals
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editForm, setEditForm] = useState<Panneau>({ id: 1, category: "", title: "", description: "", image: "" });
+  const [addForm, setAddForm] = useState<Omit<Panneau, "id">>({ category: "Danger", title: "", description: "", image: "/SUJETS%20FRANCAIS/images/p1.png" });
+
+  const { toast } = useToast();
+  const isAdmin = userRole === "admin" || userRole === "directeur";
+
+  // Load custom panels from LocalStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setPanels(parsed);
+        }
+      }
+    } catch {}
+  }, []);
+
+  const savePanelsToStorage = (newPanels: Panneau[]) => {
+    setPanels(newPanels);
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newPanels));
+    } catch {}
+  };
+
   const currentPanneau = panels[currentIndex] || panels[0];
   const progressPercent = Math.round(((currentIndex + 1) / panels.length) * 100);
 
-  // Soft Web Audio API sound chime generator
   const playPageFlipSound = () => {
     if (!soundEnabled) return;
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
-
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-
       osc.type = "sine";
-      // Soft warm chime notes C5 (523Hz) -> E5 (659Hz)
       osc.frequency.setValueAtTime(523.25, ctx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.08);
-
-      gain.gain.setValueAtTime(0.08, ctx.currentTime); // Very soft background volume
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-
       osc.connect(gain);
       gain.connect(ctx.destination);
-
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 0.12);
     } catch {}
@@ -89,22 +125,6 @@ export function PanneauxViewer() {
     }
     return () => clearInterval(interval);
   }, [isPlaying, completed, panels.length, soundEnabled]);
-
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (showGrid) return;
-      if (e.key === "ArrowRight" || e.key === " ") {
-        e.preventDefault();
-        handleNext();
-      } else if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        handlePrev();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentIndex, showGrid]);
 
   const handleNext = () => {
     playPageFlipSound();
@@ -136,6 +156,48 @@ export function PanneauxViewer() {
     setIsPlaying(false);
   };
 
+  // Admin Actions
+  const handleOpenEdit = () => {
+    setEditForm({ ...currentPanneau });
+    setShowEditDialog(true);
+  };
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const updated = panels.map((p) => (p.id === editForm.id ? editForm : p));
+    savePanelsToStorage(updated);
+    setShowEditDialog(false);
+    toast({
+      title: "Panneau modifié avec succès ! ✏️",
+      description: "Les modifications sont immédiatement synchronisées pour tous les apprenants.",
+    });
+  };
+
+  const handleSaveAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newId = Math.max(...panels.map((p) => p.id), 0) + 1;
+    const newPanneau: Panneau = { id: newId, ...addForm };
+    const updated = [...panels, newPanneau];
+    savePanelsToStorage(updated);
+    setShowAddDialog(false);
+    setCurrentIndex(updated.length - 1);
+    toast({
+      title: "Nouveau panneau ajouté ! ➕",
+      description: `Le panneau N°${newId} "${newPanneau.title}" a été ajouté au cours.`,
+    });
+  };
+
+  const handleDeleteCurrent = () => {
+    if (panels.length <= 1) {
+      toast({ title: "Impossible", description: "Le cours doit avoir au moins un panneau.", variant: "destructive" });
+      return;
+    }
+    const updated = panels.filter((p) => p.id !== currentPanneau.id);
+    savePanelsToStorage(updated);
+    setCurrentIndex((prev) => Math.min(prev, updated.length - 1));
+    toast({ title: "Panneau supprimé", description: `Le panneau #${currentPanneau.id} a été retiré.` });
+  };
+
   return (
     <div className="h-[calc(100vh-4.5rem)] max-w-4xl mx-auto flex flex-col justify-between overflow-hidden p-1 sm:p-3 space-y-2 animate-fade-in">
       {/* Top Header Bar */}
@@ -158,6 +220,26 @@ export function PanneauxViewer() {
         </div>
 
         <div className="flex items-center gap-2">
+          {isAdmin && (
+            <>
+              <Button
+                size="sm"
+                onClick={handleOpenEdit}
+                className="bg-[#0A1628] hover:bg-[#1E4070] text-white rounded-xl gap-1.5 text-xs font-bold h-8 px-3 cursor-pointer"
+              >
+                <Edit3 className="h-3.5 w-3.5 text-[#F5A623]" /> Modifier ce panneau
+              </Button>
+
+              <Button
+                size="sm"
+                onClick={() => setShowAddDialog(true)}
+                className="bg-[#F5A623] text-[#0A1628] hover:bg-[#F9CC74] rounded-xl gap-1.5 text-xs font-extrabold h-8 px-3 shadow-gold cursor-pointer"
+              >
+                <PlusCircle className="h-3.5 w-3.5" /> + Panneau
+              </Button>
+            </>
+          )}
+
           <Button
             variant="outline"
             size="sm"
@@ -209,8 +291,8 @@ export function PanneauxViewer() {
       {/* Progress Bar Line */}
       <Progress value={progressPercent} className="h-1.5 rounded-full flex-shrink-0" />
 
-      {/* MAIN PANNEAU DISPLAY CARD - FITS REMAINING HEIGHT */}
-      <Card className="flex-1 flex flex-col justify-between border-2 border-border shadow-xl rounded-2xl overflow-hidden bg-white dark:bg-[#0A1628] min-h-0">
+      {/* MAIN PANNEAU DISPLAY CARD */}
+      <Card className="flex-1 flex flex-col justify-between border-2 border-border shadow-xl rounded-2xl overflow-hidden bg-white dark:bg-[#0A1628] min-h-0 relative">
         {/* Category Header */}
         <div className="px-4 py-2 bg-muted/40 border-b flex items-center justify-between flex-shrink-0">
           <Badge
@@ -219,9 +301,20 @@ export function PanneauxViewer() {
           >
             {currentPanneau.category || "Panneau de signalisation"}
           </Badge>
-          <span className="text-xs font-mono text-muted-foreground font-semibold flex-shrink-0">
-            N° {currentPanneau.id} / {panels.length}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono text-muted-foreground font-semibold flex-shrink-0">
+              N° {currentPanneau.id} / {panels.length}
+            </span>
+            {isAdmin && (
+              <button
+                onClick={handleDeleteCurrent}
+                title="Supprimer ce panneau"
+                className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* CENTER CONTENT AREA */}
@@ -332,6 +425,132 @@ export function PanneauxViewer() {
               </button>
             ))}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ADMIN EDIT DIALOG */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <Edit3 className="h-5 w-5 text-[#F5A623]" /> Modifier le Panneau N°{editForm.id}
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveEdit} className="space-y-4 mt-2">
+            <div className="space-y-1.5">
+              <Label>Catégorie</Label>
+              <Input
+                value={editForm.category}
+                onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                placeholder="Danger, Interdiction, Obligation, Indication..."
+                required
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Nom / Titre du panneau</Label>
+              <Input
+                value={editForm.title}
+                onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                placeholder="Ex: Virage dangereux à droite"
+                required
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Explication détaillée</Label>
+              <Textarea
+                rows={3}
+                value={editForm.description}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                placeholder="Description du rôle du panneau et des consignes pour le conducteur..."
+                required
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>URL de l'image (chemin relatif ou web)</Label>
+              <Input
+                value={editForm.image}
+                onChange={(e) => setEditForm({ ...editForm, image: e.target.value })}
+                placeholder="/SUJETS%20FRANCAIS/images/p1.png"
+                required
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>
+                Annuler
+              </Button>
+              <Button type="submit" className="bg-[#F5A623] text-[#0A1628] hover:bg-[#F9CC74] font-bold gap-2">
+                <Save className="h-4 w-4" /> Enregistrer & Actualiser
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ADMIN ADD DIALOG */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <PlusCircle className="h-5 w-5 text-[#F5A623]" /> Ajouter un nouveau Panneau
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveAdd} className="space-y-4 mt-2">
+            <div className="space-y-1.5">
+              <Label>Catégorie</Label>
+              <Input
+                value={addForm.category}
+                onChange={(e) => setAddForm({ ...addForm, category: e.target.value })}
+                placeholder="Danger, Interdiction, Obligation..."
+                required
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Nom / Titre du nouveau panneau</Label>
+              <Input
+                value={addForm.title}
+                onChange={(e) => setAddForm({ ...addForm, title: e.target.value })}
+                placeholder="Ex: Passage à niveau avec barrières"
+                required
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Explication pour les apprenants</Label>
+              <Textarea
+                rows={3}
+                value={addForm.description}
+                onChange={(e) => setAddForm({ ...addForm, description: e.target.value })}
+                placeholder="Détails et conseils pour les candidats..."
+                required
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>URL de l'image du panneau</Label>
+              <Input
+                value={addForm.image}
+                onChange={(e) => setAddForm({ ...addForm, image: e.target.value })}
+                placeholder="/SUJETS%20FRANCAIS/images/p1.png"
+                required
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
+                Annuler
+              </Button>
+              <Button type="submit" className="bg-[#0A1628] text-white hover:bg-[#1E4070] font-bold gap-2">
+                <PlusCircle className="h-4 w-4" /> Publier le panneau
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
