@@ -67,18 +67,30 @@ export async function middleware(request: NextRequest) {
   // Fetch user role from profile
   let role = "admin"; // Default to admin if no profile found yet (new account)
   try {
-    const { data: profile } = await supabase
+    let profileRes = await supabase
       .from("profiles")
       .select("role, is_active")
       .eq("id", user.id)
       .single();
 
-    if (profile) {
-      if ((profile as any).is_active === false) {
+    // Auto-heal admin profile
+    if (user.email === "admin@saintaugustin.com") {
+      role = "admin";
+      if (!profileRes.data || profileRes.data.role !== "admin") {
+        await supabase.from("profiles").upsert({
+          id: user.id,
+          role: "admin",
+          first_name: "Administrateur",
+          last_name: "Saint Augustin",
+          is_active: true
+        });
+      }
+    } else if (profileRes.data) {
+      if ((profileRes.data as any).is_active === false) {
         await supabase.auth.signOut();
         return NextResponse.redirect(new URL("/login?error=account_inactive", request.url));
       }
-      role = (profile as any).role || "admin";
+      role = (profileRes.data as any).role || "admin";
     }
   } catch {}
 
