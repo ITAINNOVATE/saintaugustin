@@ -298,14 +298,14 @@ export function AdminCompositionsManagement({ initialSubjects, adminId }: AdminC
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {subjects.map((subj) => (
           <Card key={subj.id} className="border-2 border-border shadow-lg rounded-3xl overflow-hidden">
-            <CardHeader className="p-5 bg-muted/40 border-b flex flex-row items-center justify-between">
+            <CardHeader className="p-5 bg-muted/40 border-b flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <Badge className="bg-[#0A1628] text-white dark:bg-[#F5A623] dark:text-[#0A1628] font-bold text-xs">
                   Permis {subj.permit_category}
                 </Badge>
                 <h3 className="font-extrabold text-lg text-foreground mt-1">{subj.title}</h3>
               </div>
-              <div className="flex gap-2 items-center">
+              <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto">
                 {subj.audio_url && (
                   <Button
                     variant="outline"
@@ -364,9 +364,9 @@ export function AdminCompositionsManagement({ initialSubjects, adminId }: AdminC
               </div>
 
               {/* Audio URL indicator */}
-              <div className="p-3 bg-blue-50/50 dark:bg-blue-950/20 rounded-xl border border-blue-200 text-xs flex items-center justify-between">
-                <span className="text-muted-foreground font-mono truncate max-w-[220px]">
-                  🎙️ {subj.audio_url ? "Audio chargé" : "Aucun audio rattaché"}
+              <div className="p-3 bg-blue-50/50 dark:bg-blue-950/20 rounded-xl border border-blue-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <span className="text-muted-foreground font-mono truncate w-full sm:max-w-[220px]">
+                  🎙️ {subj.audio_url ? "Audio/Vidéo chargé" : "Aucun fichier rattaché"}
                 </span>
                 <Badge variant="outline" className="text-[10px]">Sync Temporelle</Badge>
               </div>
@@ -378,8 +378,8 @@ export function AdminCompositionsManagement({ initialSubjects, adminId }: AdminC
                   <p className="text-xs italic text-muted-foreground">Aucune question ajoutée pour l&apos;instant.</p>
                 ) : (
                   subj.questions?.map((q, idx) => (
-                    <div key={q.id || idx} className="p-2.5 bg-muted/30 rounded-xl border text-xs flex items-center justify-between">
-                      <span className="font-medium text-foreground truncate max-w-[80%]">
+                    <div key={q.id || idx} className="p-2.5 bg-muted/30 rounded-xl border text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 sm:gap-2">
+                      <span className="font-medium text-foreground truncate w-full sm:max-w-[80%]">
                         {idx + 1}. {q.question_text}
                       </span>
                       <span className="text-[10px] font-mono text-muted-foreground">
@@ -412,7 +412,7 @@ export function AdminCompositionsManagement({ initialSubjects, adminId }: AdminC
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Catégorie de Permis</Label>
                 <Select
@@ -445,7 +445,7 @@ export function AdminCompositionsManagement({ initialSubjects, adminId }: AdminC
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-2">
                 <Label>Durée (min)</Label>
                 <Input
@@ -538,7 +538,7 @@ export function AdminCompositionsManagement({ initialSubjects, adminId }: AdminC
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Type de Question</Label>
                 <Select
@@ -565,7 +565,7 @@ export function AdminCompositionsManagement({ initialSubjects, adminId }: AdminC
             </div>
 
             {/* Audio Timestamp Sync */}
-            <div className="grid grid-cols-2 gap-3 p-3 bg-muted/40 rounded-2xl border">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-muted/40 rounded-2xl border">
               <div className="space-y-1">
                 <Label className="text-xs">Début Audio (sec)</Label>
                 <Input
