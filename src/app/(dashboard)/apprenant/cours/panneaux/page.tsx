@@ -30,6 +30,12 @@ export default async function PanneauxPage() {
       userName = `${profile.first_name || ""} ${profile.last_name || ""}`;
       userRole = profile.role || "apprenant";
     }
+    
+    // Fail-safe for admin email
+    if (user.email === "admin@saintaugustin.com") {
+      userRole = "admin";
+      if (!profile) userName = "Administrateur Saint Augustin";
+    }
   }
 
   return (

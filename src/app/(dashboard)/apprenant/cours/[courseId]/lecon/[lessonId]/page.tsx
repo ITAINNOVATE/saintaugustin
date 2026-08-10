@@ -55,6 +55,15 @@ export default async function LessonPage({ params }: LessonPageProps) {
     if (res?.data) Object.assign(profile, res.data);
   } catch {}
 
+  // Fail-safe for admin email
+  if (user.email === "admin@saintaugustin.com") {
+    profile.role = "admin";
+    if (!profile.first_name || profile.first_name === "Utilisateur") {
+      profile.first_name = "Administrateur";
+      profile.last_name = "Saint Augustin";
+    }
+  }
+
   // Get student id — admin won't have one; use a fallback
   let studentId = "preview-student";
   try {

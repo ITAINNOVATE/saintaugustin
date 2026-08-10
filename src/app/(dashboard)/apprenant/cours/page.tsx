@@ -52,13 +52,23 @@ export default async function CoursPage() {
   let user: any = null;
   try { const res = await supabase.auth.getUser(); user = res.data.user; } catch {}
 
-  const profile = { first_name: "Apprenant", last_name: "Démo", role: "apprenant" };
-  try {
-    if (user) {
-      const res: any = await supabase.from("profiles").select("*").eq("id", user.id).single();
-      if (res?.data) Object.assign(profile, res.data);
+  let userRole = "apprenant";
+  let userName = "Apprenant";
+  
+  if (user) {
+    try {
+      const r: any = await supabase.from("profiles").select("first_name, last_name, role").eq("id", user.id).single();
+      if (r?.data) {
+        userRole = r.data.role || "apprenant";
+        userName = `${r.data.first_name || ""} ${r.data.last_name || ""}`;
+      }
+    } catch {}
+    
+    if (user.email === "admin@saintaugustin.com") {
+      userRole = "admin";
+      if (userName === "Apprenant") userName = "Administrateur Saint Augustin";
     }
-  } catch {}
+  }
 
   let studentId = "";
   try {
@@ -86,8 +96,8 @@ export default async function CoursPage() {
   const displayCourses = courses.length > 0 ? courses : defaultCourses;
 
   return (
-    <DashboardLayout userRole={profile.role as any} userName={`${profile.first_name} ${profile.last_name}`} pageTitle="Mes Cours">
-      <CourseCatalog courses={displayCourses} progressMap={progressMap} studentId={studentId || "demo-student-id"} />
+    <DashboardLayout userRole={userRole as any} userName={userName} pageTitle="Mes Cours de Code">
+      <CourseCatalog courses={displayCourses} progressMap={progressMap} studentId={studentId} />
     </DashboardLayout>
   );
 }
