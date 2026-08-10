@@ -1,54 +1,43 @@
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { MoniteurEvaluations } from "@/components/conduite/MoniteurEvaluations";
 
 export const metadata = {
   title: "Évaluations de Conduite | Auto École Saint Augustin",
-  description: "Espace Moniteur — Notation pratique des apprenants en conduite.",
 };
 
 export default async function MoniteurPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
-  let userRole = "moniteur";
-  let userName = "Moniteur Conduite";
+  let user: any = null;
+  try { const res = await supabase.auth.getUser(); user = res.data.user; } catch {}
 
-  if (user) {
-    const profileRes: any = await supabase
-      .from("profiles")
-      .select("first_name, last_name, role")
-      .eq("id", user.id)
-      .single();
-    const profile = profileRes?.data;
-
-    if (profile) {
-      userName = `${profile.first_name || ""} ${profile.last_name || ""}`;
-      userRole = profile.role || "moniteur";
+  const profile = { first_name: "Moniteur", last_name: "Conduite", role: "moniteur" };
+  try {
+    if (user) {
+      const res: any = await supabase.from("profiles").select("first_name, last_name, role").eq("id", user.id).single();
+      if (res?.data) Object.assign(profile, res.data);
     }
-  }
+  } catch {}
 
-  // Fetch list of students
-  const { data: students } = await supabase
-    .from("students")
-    .select("*")
-    .order("created_at", { ascending: false });
+  let students: any[] = [];
+  try {
+    const res = await supabase.from("students").select("*").order("created_at", { ascending: false });
+    students = res.data || [];
+  } catch {}
 
-  // Fetch existing driving evaluations
-  const { data: evaluations } = await supabase
-    .from("driving_evaluations")
-    .select("*, students(id, first_name, last_name, matricule)")
-    .order("created_at", { ascending: false });
+  let evaluations: any[] = [];
+  try {
+    const res = await supabase.from("driving_evaluations").select("*, students(id, first_name, last_name, matricule)").order("created_at", { ascending: false });
+    evaluations = res.data || [];
+  } catch {}
 
   return (
-    <DashboardLayout userRole={userRole as any} userName={userName} pageTitle="Évaluations de Conduite">
+    <DashboardLayout userRole={profile.role as any} userName={`${profile.first_name} ${profile.last_name}`} pageTitle="Évaluations de Conduite">
       <MoniteurEvaluations
-        students={students || []}
-        initialEvaluations={(evaluations as any) || []}
-        instructorId={user?.id || "demo-instructor-id"}
+        students={students}
+        initialEvaluations={evaluations as any}
+        instructorId={user?.id || "moniteur"}
       />
     </DashboardLayout>
   );
