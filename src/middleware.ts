@@ -66,10 +66,11 @@ export async function middleware(request: NextRequest) {
 
   // Fetch user role from profile
   let role = "admin"; // Default to admin if no profile found yet (new account)
+  let moduleAccesses: string[] | null = null;
   try {
     let profileRes = await supabase
       .from("profiles")
-      .select("role, is_active")
+      .select("role, is_active, module_accesses")
       .eq("id", user.id)
       .single();
 
@@ -91,6 +92,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL("/login?error=account_inactive", request.url));
       }
       role = (profileRes.data as any).role || "admin";
+      moduleAccesses = (profileRes.data as any).module_accesses || null;
     }
   } catch {}
 
@@ -107,7 +109,13 @@ export async function middleware(request: NextRequest) {
   }
 
   // For other roles: check allowed paths
-  const allowedPaths = ROLE_ROUTES[role] || [];
+  let allowedPaths = ROLE_ROUTES[role] || [];
+  
+  // Use custom module accesses if defined by admin
+  if (role !== "apprenant" && Array.isArray(moduleAccesses)) {
+    allowedPaths = moduleAccesses;
+  }
+
   const isAllowed = allowedPaths.some((p) => pathname.startsWith(p));
 
   if (!isAllowed) {

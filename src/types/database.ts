@@ -44,6 +44,7 @@ export interface Profile {
   phone?: string;
   avatar_url?: string;
   is_active: boolean;
+  module_accesses?: string[];
   created_at: string;
   updated_at: string;
 }

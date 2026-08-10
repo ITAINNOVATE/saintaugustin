@@ -17,6 +17,7 @@ import {
   Car,
   FileText,
   CreditCard,
+  Shield,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { UserRole } from "@/types/database";
@@ -32,6 +33,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   // Admin
   { href: "/admin", label: "Tableau de bord", icon: LayoutDashboard, roles: ["admin"] },
+  { href: "/admin/administration", label: "Administration", icon: Shield, roles: ["admin"] },
   { href: "/admin/apprenants", label: "Apprenants", icon: Users, roles: ["admin"] },
   { href: "/admin/cours", label: "Cours de codes", icon: BookOpen, roles: ["admin"] },
   { href: "/admin/conduite", label: "Évaluation Conduite", icon: Car, roles: ["admin"] },
