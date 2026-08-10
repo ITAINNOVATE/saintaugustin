@@ -184,6 +184,35 @@ export function AdminCompositionsManagement({ initialSubjects, adminId }: AdminC
     });
   };
 
+  const handleDeleteSubject = async (subjectId: string) => {
+    if (!confirm("Voulez-vous vraiment supprimer ce sujet ?")) return;
+    startTransition(async () => {
+      const { error } = await supabase.from("composition_subjects").delete().eq("id", subjectId);
+      if (!error) {
+        setSubjects((prev) => prev.filter((s) => s.id !== subjectId));
+        toast({ title: "Sujet supprimé" });
+      } else {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      }
+    });
+  };
+
+  const handleEditSubject = (subj: CompositionSubject) => {
+    setSelectedSubject(subj);
+    setSubjectForm({
+      title: subj.title,
+      permit_category: subj.permit_category as PermitCategory,
+      duration_minutes: subj.duration_minutes || 20,
+      total_questions: subj.total_questions || 20,
+      pass_score: subj.pass_score || 16,
+      difficulty: (subj.difficulty as any) || "Moyen",
+      audio_url: subj.audio_url || "",
+      can_go_back: subj.can_go_back ?? true,
+      show_explanations: subj.show_explanations ?? true,
+    });
+    setShowSubjectDialog(true);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in pb-12">
       {/* Header */}
@@ -212,7 +241,37 @@ export function AdminCompositionsManagement({ initialSubjects, adminId }: AdminC
                 </Badge>
                 <h3 className="font-extrabold text-lg text-foreground mt-1">{subj.title}</h3>
               </div>
-              <Button
+              <div className="flex gap-2 items-center">
+                {subj.audio_url && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => window.open(subj.audio_url, "_blank")}
+                    title="Ouvrir la vidéo"
+                    className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleEditSubject(subj)}
+                  title="Modifier le sujet"
+                  className="h-8 w-8 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleDeleteSubject(subj.id)}
+                  title="Supprimer le sujet"
+                  className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+                <Button
                 variant="outline"
                 size="sm"
                 onClick={() => {
@@ -235,10 +294,11 @@ export function AdminCompositionsManagement({ initialSubjects, adminId }: AdminC
                   });
                   setShowQuestionDialog(true);
                 }}
-                className="rounded-xl text-xs font-bold gap-1"
+                className="rounded-xl text-xs font-bold gap-1 h-8"
               >
                 <Plus className="h-3.5 w-3.5" /> Question
               </Button>
+              </div>
             </CardHeader>
 
             <CardContent className="p-5 space-y-4">
