@@ -475,12 +475,36 @@ export function AdminCompositionsManagement({ initialSubjects, adminId }: AdminC
             </div>
 
             <div className="space-y-2">
-              <Label>URL du Fichier Audio de la Composition (.mp3 / .mpg)</Label>
+              <Label>Fichier Audio/Vidéo de la Composition (.mp3 / .mp4)</Label>
               <Input
-                placeholder="https://exemples.com/audio-sujet1.mp3"
-                value={subjectForm.audio_url}
-                onChange={(e) => setSubjectForm({ ...subjectForm, audio_url: e.target.value })}
+                type="file"
+                accept="audio/*,video/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    toast({ title: "Téléversement en cours...", description: "Veuillez patienter (cela peut prendre quelques instants)." });
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `sujet-${Date.now()}.${fileExt}`;
+                    
+                    const { data, error } = await supabase.storage
+                      .from('compositions')
+                      .upload(fileName, file);
+
+                    if (error) {
+                      toast({ title: "Erreur d'upload", description: error.message, variant: "destructive" });
+                    } else if (data) {
+                      const { data: publicUrlData } = supabase.storage
+                        .from('compositions')
+                        .getPublicUrl(fileName);
+                      
+                      setSubjectForm({ ...subjectForm, audio_url: publicUrlData.publicUrl });
+                      toast({ title: "Fichier téléversé avec succès !" });
+                    }
+                  }
+                }}
+                className="file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#0A1628] file:text-white hover:file:bg-[#1E4070] text-sm cursor-pointer"
               />
+              {subjectForm.audio_url && <p className="text-xs text-green-600 truncate max-w-sm">URL actuelle : {subjectForm.audio_url}</p>}
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t">
