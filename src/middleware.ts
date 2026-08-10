@@ -3,14 +3,16 @@ import { createServerClient } from "@supabase/ssr";
 
 const PUBLIC_ROUTES = ["/login", "/forgot-password", "/reset-password"];
 
+// Pages accessibles par chaque rôle
 const ROLE_ROUTES: Record<string, string[]> = {
-  admin: ["/admin", "/directeur", "/secretaire", "/moniteur"],
+  admin: ["/admin", "/secretaire", "/moniteur", "/directeur"],
   directeur: ["/directeur", "/secretaire", "/admin/permis", "/admin/statistiques", "/admin/compositions", "/moniteur"],
   secretaire: ["/secretaire", "/admin/abonnements", "/admin/permis"],
   moniteur: ["/moniteur"],
   apprenant: ["/apprenant"],
 };
 
+// Page d'accueil par rôle après connexion
 const ROLE_HOME: Record<string, string> = {
   admin: "/admin",
   directeur: "/directeur",
@@ -26,57 +28,49 @@ export async function middleware(request: NextRequest) {
   const supabaseUrl = rawUrl && rawUrl.startsWith("http") ? rawUrl : "https://placeholder.supabase.co";
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
 
-  const supabase = createServerClient(
-    supabaseUrl,
-    supabaseAnonKey,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() { return request.cookies.getAll(); },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        supabaseResponse = NextResponse.next({ request });
+        cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options));
       },
-    }
-  );
+    },
+  });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const { data: { user } } = await supabase.auth.getUser();
   const pathname = request.nextUrl.pathname;
-
-  const demoRole = request.cookies.get("demo_role")?.value;
   const isPlaceholderUrl = supabaseUrl.includes("placeholder.supabase.co");
 
-  // Redirect root to login or dashboard
+  // Redirect root
   if (pathname === "/") {
-    if (!user && !demoRole && !isPlaceholderUrl) {
+    if (!user && !isPlaceholderUrl) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
-    const role = demoRole || "admin";
-    return NextResponse.redirect(new URL(ROLE_HOME[role] || "/admin", request.url));
+    // Will be handled after role resolution below
   }
 
-  // Allow public routes
+  // Allow public routes without auth check
   if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
     return supabaseResponse;
   }
 
-  // Allow dashboard routes in demo mode or when authenticated
-  if (!user && !demoRole && !isPlaceholderUrl) {
+  // Not authenticated → redirect to login
+  if (!user && !isPlaceholderUrl) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  let role = demoRole || "admin";
+  // Demo / no supabase: allow everything in placeholder mode
+  if (isPlaceholderUrl) {
+    if (pathname === "/") {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+    return supabaseResponse;
+  }
 
+  // Fetch user role from profile
+  let role = "apprenant";
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
@@ -91,19 +85,20 @@ export async function middleware(request: NextRequest) {
     role = (profile as any).role as string;
   }
 
+  const home = ROLE_HOME[role] || "/login";
+
+  // Redirect root to role home
+  if (pathname === "/") {
+    return NextResponse.redirect(new URL(home, request.url));
+  }
+
+  // Check if the user is allowed to access this path
   const allowedPaths = ROLE_ROUTES[role] || [];
   const isAllowed = allowedPaths.some((p) => pathname.startsWith(p));
 
-  if (!isAllowed && pathname.startsWith("/admin") && role !== "admin") {
-    return NextResponse.redirect(new URL(ROLE_HOME[role] || "/apprenant/cours", request.url));
-  }
-
-  if (!isAllowed && pathname.startsWith("/directeur") && !["admin", "directeur"].includes(role)) {
-    return NextResponse.redirect(new URL(ROLE_HOME[role] || "/apprenant", request.url));
-  }
-
-  if (!isAllowed && pathname.startsWith("/secretaire") && !["admin", "secretaire"].includes(role)) {
-    return NextResponse.redirect(new URL(ROLE_HOME[role] || "/apprenant", request.url));
+  if (!isAllowed) {
+    // Redirect to their own home instead of showing a 403
+    return NextResponse.redirect(new URL(home, request.url));
   }
 
   return supabaseResponse;

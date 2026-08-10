@@ -73,6 +73,7 @@ export default function LoginPage() {
           admin: "/admin",
           directeur: "/directeur",
           secretaire: "/secretaire",
+          moniteur: "/moniteur",
           apprenant: "/apprenant/cours",
         };
 
