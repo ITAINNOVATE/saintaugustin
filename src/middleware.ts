@@ -3,9 +3,10 @@ import { createServerClient } from "@supabase/ssr";
 
 const PUBLIC_ROUTES = ["/login", "/forgot-password", "/reset-password"];
 
-// Pages accessibles par chaque rôle
+// L'admin a accès à TOUTES les pages
+// Les autres rôles ont accès uniquement à leurs sections
 const ROLE_ROUTES: Record<string, string[]> = {
-  admin: ["/admin", "/secretaire", "/moniteur", "/directeur", "/apprenant"],
+  admin: ["/"], // Admin = accès illimité à tout
   directeur: ["/directeur", "/secretaire", "/admin/permis", "/admin/statistiques", "/admin/compositions", "/admin/examens", "/moniteur"],
   secretaire: ["/secretaire", "/admin/abonnements", "/admin/permis"],
   moniteur: ["/moniteur"],
@@ -27,6 +28,7 @@ export async function middleware(request: NextRequest) {
   const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseUrl = rawUrl && rawUrl.startsWith("http") ? rawUrl : "https://placeholder.supabase.co";
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
+  const isPlaceholderUrl = supabaseUrl.includes("placeholder.supabase.co");
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
@@ -39,57 +41,64 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  const { data: { user } } = await supabase.auth.getUser();
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch {}
+
   const pathname = request.nextUrl.pathname;
-  const isPlaceholderUrl = supabaseUrl.includes("placeholder.supabase.co");
 
-  // Redirect root
-  if (pathname === "/") {
-    if (!user && !isPlaceholderUrl) {
-      return NextResponse.redirect(new URL("/login", request.url));
-    }
-    // Will be handled after role resolution below
-  }
-
-  // Allow public routes without auth check
+  // Allow public routes
   if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
     return supabaseResponse;
   }
 
   // Not authenticated → redirect to login
-  if (!user) {
+  if (!user && !isPlaceholderUrl) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Fetch user role from profile in Supabase
-  let role = "admin";
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, is_active")
-    .eq("id", user.id)
-    .single();
-
-  if (profile) {
-    if ((profile as any).is_active === false) {
-      await supabase.auth.signOut();
-      return NextResponse.redirect(new URL("/login?error=account_inactive", request.url));
-    }
-    role = (profile as any).role || "admin";
+  // If placeholder URL (dev without Supabase), let everything through
+  if (isPlaceholderUrl) {
+    return supabaseResponse;
   }
 
-  const home = ROLE_HOME[role] || "/login";
+  // Fetch user role from profile
+  let role = "admin"; // Default to admin if no profile found yet (new account)
+  try {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, is_active")
+      .eq("id", user.id)
+      .single();
 
-  // Redirect root to role home
+    if (profile) {
+      if ((profile as any).is_active === false) {
+        await supabase.auth.signOut();
+        return NextResponse.redirect(new URL("/login?error=account_inactive", request.url));
+      }
+      role = (profile as any).role || "admin";
+    }
+  } catch {}
+
+  const home = ROLE_HOME[role] || "/admin";
+
+  // Redirect root "/" to role home
   if (pathname === "/") {
     return NextResponse.redirect(new URL(home, request.url));
   }
 
-  // Check if the user is allowed to access this path
+  // ADMIN has unrestricted access to everything — skip route check
+  if (role === "admin") {
+    return supabaseResponse;
+  }
+
+  // For other roles: check allowed paths
   const allowedPaths = ROLE_ROUTES[role] || [];
   const isAllowed = allowedPaths.some((p) => pathname.startsWith(p));
 
   if (!isAllowed) {
-    // Redirect to their own home instead of showing a 403
     return NextResponse.redirect(new URL(home, request.url));
   }
 
