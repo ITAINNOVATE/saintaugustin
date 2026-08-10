@@ -93,9 +93,9 @@ export function Sidebar({ userRole, userName, userEmail, notificationCount = 0, 
   };
 
   return (
-    <aside className="flex flex-col h-screen bg-[#0A1628] text-white w-64 relative z-30 flex-shrink-0">
+    <aside className="flex flex-col h-screen bg-[#0A1628] text-white w-64 min-w-[260px] max-w-[260px] relative z-30 flex-shrink-0">
       {/* Logo & Header */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-white/10">
+      <div className="flex items-center gap-3 px-4 py-5 border-b border-white/10 flex-shrink-0">
         <div className="flex-shrink-0 w-9 h-9 bg-[#F5A623] rounded-xl flex items-center justify-center shadow-gold">
           <Car className="h-5 w-5 text-[#0A1628]" />
         </div>
