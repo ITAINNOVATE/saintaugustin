@@ -5,7 +5,7 @@ const PUBLIC_ROUTES = ["/login", "/forgot-password", "/reset-password"];
 
 // Pages accessibles par chaque rôle
 const ROLE_ROUTES: Record<string, string[]> = {
-  admin: ["/admin", "/secretaire", "/moniteur", "/directeur"],
+  admin: ["/admin", "/secretaire", "/moniteur", "/directeur", "/apprenant"],
   directeur: ["/directeur", "/secretaire", "/admin/permis", "/admin/statistiques", "/admin/compositions", "/admin/examens", "/moniteur"],
   secretaire: ["/secretaire", "/admin/abonnements", "/admin/permis"],
   moniteur: ["/moniteur"],

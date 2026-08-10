@@ -13,10 +13,14 @@ export default async function PermisPage() {
     ? (await supabase.from("profiles").select("*").eq("id", user.id).single() as { data: any }).data
     : { first_name: "Administrateur", last_name: "Saint Augustin", role: "admin" };
 
-  const { data: permits } = await supabase
-    .from("learner_permits")
-    .select("*, students(id, first_name, last_name, matricule)")
-    .order("created_at", { ascending: false });
+  let permits: any = null;
+  try {
+    const { data } = await supabase
+      .from("learner_permits")
+      .select("*, students(id, first_name, last_name, matricule)")
+      .order("created_at", { ascending: false });
+    permits = data;
+  } catch {}
 
   return (
     <DashboardLayout userRole={profile.role} userName={`${profile.first_name} ${profile.last_name}`} pageTitle="Permis Délivrés">
