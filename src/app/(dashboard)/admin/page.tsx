@@ -12,14 +12,29 @@ export default async function AdminDashboardPage() {
   const profileRes: any = await supabase.from("profiles").select("*").eq("id", user?.id || "").single();
   const profile = profileRes?.data || { first_name: "Administrateur", last_name: "Saint Augustin", role: "admin" };
 
-  const [studentsResult, subsResult, coursesResult, examsResult, permitsResult, progressResult] = await Promise.all([
-    supabase.from("students").select("id, first_name, last_name, matricule, status, created_at") as any,
-    supabase.from("subscriptions").select("id, status, plan, created_at") as any,
-    supabase.from("courses").select("id, title, is_published, chapters(id, lessons(id))") as any,
-    supabase.from("exam_sessions").select("id, student_id, score, is_passed, started_at, students(id, first_name, last_name, matricule)") as any,
-    supabase.from("learner_permits").select("id, created_at") as any,
-    supabase.from("lesson_progress").select("id, student_id, lesson_id, completed, completed_at") as any,
-  ]);
+  let studentsResult: any = { data: [] };
+  let subsResult: any = { data: [] };
+  let coursesResult: any = { data: [] };
+  let examsResult: any = { data: [] };
+  let permitsResult: any = { data: [] };
+  let progressResult: any = { data: [] };
+
+  try {
+    const results = await Promise.all([
+      supabase.from("students").select("id, first_name, last_name, matricule, status, created_at") as any,
+      supabase.from("subscriptions").select("id, status, plan, created_at") as any,
+      supabase.from("courses").select("id, title, is_published, chapters(id, lessons(id))") as any,
+      supabase.from("exam_sessions").select("id, student_id, score, is_passed, started_at, students(id, first_name, last_name, matricule)") as any,
+      supabase.from("learner_permits").select("id, created_at") as any,
+      supabase.from("lesson_progress").select("id, student_id, lesson_id, completed, completed_at") as any,
+    ]);
+    studentsResult = results[0];
+    subsResult = results[1];
+    coursesResult = results[2];
+    examsResult = results[3];
+    permitsResult = results[4];
+    progressResult = results[5];
+  } catch {}
 
   const stats = {
     totalStudents: studentsResult.data?.length || 0,
