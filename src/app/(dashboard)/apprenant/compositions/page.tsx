@@ -18,21 +18,23 @@ export default async function CompositionsPage() {
   let studentId = "demo-student-id";
 
   if (user) {
-    const { data: profile } = (await supabase
+    const profileRes: any = await supabase
       .from("profiles")
       .select("first_name, last_name")
       .eq("id", user.id)
-      .single()) as { data: any };
+      .single();
+    const profile = profileRes?.data;
 
     if (profile) {
       userName = `${profile.first_name || ""} ${profile.last_name || ""}`;
     }
 
-    const { data: student } = (await supabase
+    const studentRes: any = await supabase
       .from("students")
       .select("id")
       .eq("user_id", user.id)
-      .single()) as { data: any };
+      .single();
+    const student = studentRes?.data;
 
     if (student) {
       studentId = student.id;
