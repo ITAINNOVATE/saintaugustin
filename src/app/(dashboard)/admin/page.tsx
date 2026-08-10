@@ -83,9 +83,13 @@ export default async function AdminDashboardPage() {
 
   const recentStudents = students.slice(0, 5);
 
-  const notifRes: any = user
-    ? await supabase.from("notifications").select("*").eq("user_id", user.id).eq("is_read", false).order("created_at", { ascending: false }).limit(5)
-    : { data: [] };
+  let notificationCount = 0;
+  try {
+    if (user) {
+      const notifRes: any = await supabase.from("notifications").select("*").eq("user_id", user.id).eq("is_read", false).order("created_at", { ascending: false }).limit(5);
+      notificationCount = notifRes?.data?.length || 0;
+    }
+  } catch {}
 
   return (
     <DashboardLayout
@@ -93,7 +97,7 @@ export default async function AdminDashboardPage() {
       userName={`${profile.first_name} ${profile.last_name}`}
       userEmail={user?.email || "admin@saintaugustin.bj"}
       pageTitle="Tableau de bord"
-      notificationCount={notifRes?.data?.length || 0}
+      notificationCount={notificationCount}
     >
       <AdminDashboardContent
         stats={stats}
