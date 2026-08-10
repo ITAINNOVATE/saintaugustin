@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { AdminCoursesManagement } from "@/components/courses/AdminCoursesManagement";
 
@@ -40,6 +40,7 @@ export default async function AdminCoursesPage() {
   let courses: any[] = [];
 
   try {
+    const { createClient } = await import("@/lib/supabase/server");
     const supabase = await createClient();
 
     try { const r = await supabase.auth.getUser(); user = r.data?.user ?? null; } catch {}
