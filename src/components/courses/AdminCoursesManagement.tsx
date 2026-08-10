@@ -87,9 +87,36 @@ export function AdminCoursesManagement({ courses: initialCourses, adminId }: Adm
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold">Gestion des Cours</h1><p className="text-muted-foreground text-sm">{courses.length} cours</p></div>
+        <div><h1 className="text-2xl font-bold">Gestion des Cours</h1><p className="text-muted-foreground text-sm">{courses.length} cours de code disponible(s)</p></div>
         <Button onClick={() => { setSelectedCourse(null); setCourseForm({ title: "", description: "", category: "", level: "débutant" }); setShowCourseDialog(true); }} className="bg-[#0A1628] hover:bg-[#1E4070] gap-2"><Plus className="h-4 w-4" />Nouveau cours</Button>
       </div>
+
+      {/* Featured Lesson Banner: Lecture des Panneaux pour Administrateur */}
+      <Card className="overflow-hidden border-2 border-[#F5A623] bg-gradient-to-r from-[#0A1628] via-[#0F2A53] to-[#1E4070] text-white shadow-xl rounded-3xl relative">
+        <div className="p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+          <div className="space-y-3 text-center md:text-left flex-1">
+            <Badge className="bg-[#F5A623] text-[#0A1628] font-extrabold text-xs px-3 py-1 rounded-full uppercase tracking-wider">
+              🔥 Cours Officiel N°1 • Panneaux Interactifs
+            </Badge>
+            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+              Lecture des 73 Panneaux de Signalisation
+            </h2>
+            <p className="text-white/80 text-sm max-w-xl leading-relaxed">
+              Consultez et testez le module interactif contenant les <strong>73 panneaux de signalisation du Code de la Route</strong> (Danger, Interdiction, Obligation, Indication...).
+            </p>
+          </div>
+
+          <Link href="/apprenant/cours/panneaux">
+            <Button
+              size="lg"
+              className="bg-[#F5A623] text-[#0A1628] hover:bg-[#F9CC74] font-bold text-base px-8 py-6 rounded-2xl shadow-gold flex items-center gap-3 hover:scale-105 transition-all cursor-pointer"
+            >
+              <BookOpen className="h-5 w-5" />
+              Ouvrir le cours Panneaux →
+            </Button>
+          </Link>
+        </div>
+      </Card>
 
       <div className="space-y-3">
         {courses.map(course => (
