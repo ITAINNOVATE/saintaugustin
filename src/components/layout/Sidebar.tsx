@@ -36,6 +36,7 @@ const navItems: NavItem[] = [
   { href: "/admin/abonnements", label: "Abonnements", icon: CreditCard, roles: ["admin"] },
   { href: "/admin/cours", label: "Gestion des Cours", icon: BookOpen, roles: ["admin"] },
   { href: "/admin/compositions", label: "Gestion Compositions", icon: FileText, roles: ["admin"] },
+  { href: "/admin/examens", label: "Examens Blancs", icon: GraduationCap, roles: ["admin"] },
   { href: "/moniteur", label: "Évaluations Conduite", icon: Car, roles: ["admin"] },
   { href: "/admin/permis", label: "Permis délivrés", icon: IdCard, roles: ["admin"] },
   { href: "/admin/statistiques", label: "Statistiques", icon: BarChart3, roles: ["admin"] },
