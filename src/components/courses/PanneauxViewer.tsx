@@ -156,6 +156,21 @@ export function PanneauxViewer({ userRole }: PanneauxViewerProps) {
     setIsPlaying(false);
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      if (isEdit) {
+        setEditForm({ ...editForm, image: base64String });
+      } else {
+        setAddForm({ ...addForm, image: base64String });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Admin Actions
   const handleOpenEdit = () => {
     setEditForm({ ...currentPanneau });
@@ -470,13 +485,16 @@ export function PanneauxViewer({ userRole }: PanneauxViewerProps) {
             </div>
 
             <div className="space-y-1.5">
-              <Label>URL de l'image (chemin relatif ou web)</Label>
+              <Label>Image du panneau</Label>
               <Input
-                value={editForm.image}
-                onChange={(e) => setEditForm({ ...editForm, image: e.target.value })}
-                placeholder="/SUJETS%20FRANCAIS/images/p1.png"
-                required
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageUpload(e, true)}
+                className="cursor-pointer"
               />
+              {editForm.image && editForm.image.startsWith("data:image") && (
+                <p className="text-xs text-green-600 font-medium">Image chargée avec succès.</p>
+              )}
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
@@ -533,13 +551,17 @@ export function PanneauxViewer({ userRole }: PanneauxViewerProps) {
             </div>
 
             <div className="space-y-1.5">
-              <Label>URL de l'image du panneau</Label>
+              <Label>Image du panneau</Label>
               <Input
-                value={addForm.image}
-                onChange={(e) => setAddForm({ ...addForm, image: e.target.value })}
-                placeholder="/SUJETS%20FRANCAIS/images/p1.png"
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageUpload(e, false)}
+                className="cursor-pointer"
                 required
               />
+              {addForm.image && addForm.image.startsWith("data:image") && (
+                <p className="text-xs text-green-600 font-medium">Image prête à être ajoutée.</p>
+              )}
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
