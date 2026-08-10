@@ -186,7 +186,23 @@ export function PermisManagement({ permits: initialPermits, adminId, userRole }:
               <div className="space-y-2"><Label>Date d'expiration</Label><Input type="date" value={form.expiry_date} onChange={e => setForm({ ...form, expiry_date: e.target.value })} /></div>
               <div className="space-y-2"><Label>Centre de délivrance</Label><Input value={form.issuing_center} onChange={e => setForm({ ...form, issuing_center: e.target.value })} placeholder="Ex: Préfecture Cotonou" /></div>
             </div>
-            <div className="space-y-2"><Label>URL du scan (PDF ou image)</Label><Input value={form.scan_url} onChange={e => setForm({ ...form, scan_url: e.target.value })} placeholder="https://..." /></div>
+            <div className="space-y-2">
+              <Label>Fichier du scan (PDF ou image)</Label>
+              <Input
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => setForm({ ...form, scan_url: reader.result as string });
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                className="file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#0A1628] file:text-white hover:file:bg-[#1E4070] text-sm cursor-pointer"
+              />
+              {form.scan_url && <p className="text-xs text-green-600">Fichier chargé pour le permis.</p>}
+            </div>
             <div className="space-y-2"><Label>Observations</Label><Textarea value={form.observations} onChange={e => setForm({ ...form, observations: e.target.value })} rows={2} /></div>
             <div className="flex gap-3 justify-end">
               <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>Annuler</Button>
