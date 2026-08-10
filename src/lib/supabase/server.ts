@@ -22,7 +22,7 @@ const customFetch = (url: string | URL | Request, options?: RequestInit) => {
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 1000);
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
 
   return fetch(url, { ...options, signal: controller.signal })
     .then((res) => {
