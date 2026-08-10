@@ -57,33 +57,23 @@ export async function middleware(request: NextRequest) {
   }
 
   // Not authenticated → redirect to login
-  if (!user && !isPlaceholderUrl) {
+  if (!user) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Demo / no supabase: allow everything in placeholder mode
-  if (isPlaceholderUrl) {
-    if (pathname === "/") {
-      return NextResponse.redirect(new URL("/admin", request.url));
-    }
-    return supabaseResponse;
-  }
-
-  // Fetch user role from profile
+  // Fetch user role from profile in Supabase
   let role = "apprenant";
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role, is_active")
-      .eq("id", user.id)
-      .single();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, is_active")
+    .eq("id", user.id)
+    .single();
 
-    if (!profile || !(profile as any).is_active) {
-      await supabase.auth.signOut();
-      return NextResponse.redirect(new URL("/login?error=account_inactive", request.url));
-    }
-    role = (profile as any).role as string;
+  if (!profile || !(profile as any).is_active) {
+    await supabase.auth.signOut();
+    return NextResponse.redirect(new URL("/login?error=account_inactive", request.url));
   }
+  role = (profile as any).role as string;
 
   const home = ROLE_HOME[role] || "/login";
 
