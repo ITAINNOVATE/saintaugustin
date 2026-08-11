@@ -9,6 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Sidebar } from "./Sidebar";
 import type { UserRole } from "@/types/database";
 
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return "Bonjour";
+  if (hour >= 12 && hour < 18) return "Bon après-midi";
+  return "Bonsoir";
+}
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
   userRole: UserRole;
@@ -88,6 +95,14 @@ export function DashboardLayout({
             </Button>
             {pageTitle && (
               <h1 className="text-lg font-semibold text-foreground hidden sm:block">{pageTitle}</h1>
+            )}
+            {userRole === "apprenant" && userName && userName !== "Apprenant" && (
+              <div className="hidden md:flex items-center gap-1.5 ml-2 px-3 py-1 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-full">
+                <span className="text-sm">👋</span>
+                <span className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                  {getGreeting()}, <span className="font-bold">{userName.split(" ")[0]}</span> !
+                </span>
+              </div>
             )}
           </div>
 
