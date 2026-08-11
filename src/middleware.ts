@@ -26,9 +26,9 @@ export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseUrl = rawUrl && rawUrl.startsWith("http") ? rawUrl : "https://placeholder.supabase.co";
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
-  const isPlaceholderUrl = supabaseUrl.includes("placeholder.supabase.co");
+  const supabaseUrl = rawUrl && rawUrl.startsWith("http") ? rawUrl : "https://zhctrwqvdmcvkuldqmso.supabase.co";
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_0TzawnZq09BuvBUOPOb9Fw_xLYGkBBY";
+  const isPlaceholderUrl = false;
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
