@@ -116,60 +116,53 @@ export function MoniteurEvaluations({ students, initialEvaluations, instructorId
     startTransition(async () => {
       const payload = {
         student_id: selectedStudent.id,
-        instructor_id: instructorId,
+        instructor_id: instructorId && instructorId !== "moniteur" ? instructorId : null,
         evaluation_date: new Date().toISOString().split("T")[0],
         ...grades,
         comments,
       };
 
-      const { data, error } = await supabase
-        .from("driving_evaluations")
-        .upsert(payload as any)
-        .select("*, students(id, first_name, last_name, matricule)")
-        .single();
+      const existing = evaluations.find(e => e.student_id === selectedStudent.id);
+      
+      let resData: any = null;
 
-      if (!error) {
-        const updatedEval = (data as any) || {
-          ...payload,
-          id: `demo-eval-${Date.now()}`,
-          created_at: new Date().toISOString(),
-          students: selectedStudent,
-        };
-
-        setEvaluations(prev => {
-          const idx = prev.findIndex(e => e.student_id === selectedStudent.id);
-          if (idx >= 0) {
-            const copy = [...prev];
-            copy[idx] = updatedEval;
-            return copy;
-          }
-          return [updatedEval, ...prev];
-        });
-
-        toast({
-          title: "Évaluation de conduite enregistrée !",
-          description: `Les notes de ${selectedStudent.first_name} ${selectedStudent.last_name} ont été mises à jour.`,
-        });
-        setShowEvalDialog(false);
+      if (existing) {
+        const { data } = await (supabase.from("driving_evaluations") as any)
+          .update(payload)
+          .eq("id", existing.id)
+          .select("*, students(id, first_name, last_name, matricule)")
+          .single();
+        resData = data;
       } else {
-        // Demo fallback
-        const updatedEval: DrivingEvaluation = {
-          id: `demo-eval-${Date.now()}`,
-          student_id: selectedStudent.id,
-          instructor_id: instructorId,
-          evaluation_date: new Date().toISOString().split("T")[0],
-          ...grades,
-          comments,
-          created_at: new Date().toISOString(),
-          students: selectedStudent,
-        };
-        setEvaluations(prev => [updatedEval, ...prev.filter(e => e.student_id !== selectedStudent.id)]);
-        toast({
-          title: "Évaluation enregistrée (Mode Démo) !",
-          description: `Notes mises à jour pour ${selectedStudent.first_name} ${selectedStudent.last_name}.`,
-        });
-        setShowEvalDialog(false);
+        const { data } = await (supabase.from("driving_evaluations") as any)
+          .insert([payload])
+          .select("*, students(id, first_name, last_name, matricule)")
+          .single();
+        resData = data;
       }
+
+      const finalEval: DrivingEvaluation = resData || {
+        id: existing ? existing.id : `eval-${Date.now()}`,
+        ...payload,
+        created_at: new Date().toISOString(),
+        students: selectedStudent,
+      };
+
+      setEvaluations(prev => {
+        const idx = prev.findIndex(e => e.student_id === selectedStudent.id);
+        if (idx >= 0) {
+          const copy = [...prev];
+          copy[idx] = finalEval;
+          return copy;
+        }
+        return [finalEval, ...prev];
+      });
+
+      toast({
+        title: "Évaluation de conduite enregistrée !",
+        description: `Les notes de ${selectedStudent.first_name} ${selectedStudent.last_name} ont été enregistrées.`,
+      });
+      setShowEvalDialog(false);
     });
   };
 
