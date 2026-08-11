@@ -45,9 +45,9 @@ export function StudentsManagement({ students: initialStudents, userRole }: Stud
   const filtered = students.filter(s => {
     const q = search.toLowerCase();
     const matchesSearch = !q ||
-      s.first_name.toLowerCase().includes(q) ||
-      s.last_name.toLowerCase().includes(q) ||
-      s.matricule.toLowerCase().includes(q) ||
+      (s.first_name || "").toLowerCase().includes(q) ||
+      (s.last_name || "").toLowerCase().includes(q) ||
+      (s.matricule || "").toLowerCase().includes(q) ||
       (s.email || "").toLowerCase().includes(q) ||
       (s.phone || "").includes(q);
     const matchesStatus = statusFilter === "all" || s.status === statusFilter;
@@ -201,16 +201,16 @@ export function StudentsManagement({ students: initialStudents, userRole }: Stud
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-[#0A1628] dark:bg-[#1E4070] text-white flex items-center justify-center text-sm font-semibold flex-shrink-0">
-                        {student.first_name[0]}{student.last_name[0]}
+                        {(student.first_name?.[0] || "A")}{(student.last_name?.[0] || "P")}
                       </div>
                       <div>
                         <p className="font-medium text-sm">{student.first_name} {student.last_name}</p>
-                        <p className="text-xs text-muted-foreground md:hidden">{student.matricule}</p>
+                        <p className="text-xs text-muted-foreground md:hidden">{student.matricule || "N/A"}</p>
                       </div>
                     </div>
                   </td>
                   <td className="p-4 hidden md:table-cell">
-                    <code className="text-xs bg-muted px-2 py-1 rounded font-mono">{student.matricule}</code>
+                    <code className="text-xs bg-muted px-2 py-1 rounded font-mono">{student.matricule || "N/A"}</code>
                   </td>
                   <td className="p-4 hidden lg:table-cell">
                     <div className="space-y-0.5">

@@ -137,6 +137,9 @@ export default function LoginPage() {
           is_active: true,
         } as any);
 
+        const randomNum = Math.floor(100 + Math.random() * 900);
+        const autoMatricule = `SA-${new Date().getFullYear()}-${randomNum}`;
+
         // Créer aussi l'entrée dans la table students
         // @ts-ignore
         await supabase.from("students").upsert({
@@ -145,6 +148,7 @@ export default function LoginPage() {
           last_name: lastName,
           email: email,
           phone: phone || null,
+          matricule: autoMatricule,
           status: "active",
         } as any);
       }
