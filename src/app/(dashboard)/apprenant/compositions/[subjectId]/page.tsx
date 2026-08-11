@@ -69,7 +69,7 @@ export default async function SubjectExamPage({ params }: SubjectExamPageProps) 
     subject = {
       id: subjectId, title: `Sujet Officiel N°${numStr} — Examen Théorique`,
       permit_category: "B", duration_minutes: 20, total_questions: 20, pass_score: 16,
-      difficulty: "Moyen", audio_url: `/SUJETS%20FRANCAIS/sujet_${numStr}.mp4`,
+      difficulty: "Moyen", audio_url: `https://zhctrwqvdmcvkuldqmso.supabase.co/storage/v1/object/public/sujets-videos/sujet_${numStr}.mp4`,
       can_go_back: true, show_explanations: true, is_published: true, created_at: new Date().toISOString(),
     };
   }

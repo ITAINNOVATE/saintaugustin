@@ -13,7 +13,7 @@ const OFFICIAL_SUBJECTS = Array.from({ length: 46 }, (_, i) => {
     permit_category: categories[i % categories.length],
     duration_minutes: 20, total_questions: 20, pass_score: 16,
     difficulty: difficulties[i % difficulties.length],
-    audio_url: `/SUJETS%20FRANCAIS/sujet_${numStr}.mp4`,
+    audio_url: `https://zhctrwqvdmcvkuldqmso.supabase.co/storage/v1/object/public/sujets-videos/sujet_${numStr}.mp4`,
     can_go_back: true, show_explanations: true, is_published: true,
     created_at: new Date().toISOString(),
   };
@@ -25,14 +25,15 @@ export default async function AdminCompositionsPage() {
   let subjects: any[] = [];
 
   try {
-    const { createClient } = await import("@/lib/supabase/server");
+    const { createAdminClient, createClient } = await import("@/lib/supabase/server");
     const supabase = await createClient();
+    const adminClient = await createAdminClient();
 
     try { const r = await supabase.auth.getUser(); user = r.data?.user ?? null; } catch {}
 
     try {
       if (user) {
-        const r: any = await supabase.from("profiles").select("first_name, last_name, role").eq("id", user.id).single();
+        const r: any = await adminClient.from("profiles").select("first_name, last_name, role").eq("id", user.id).single();
         if (r?.data) profile = { ...profile, ...r.data };
       }
       if (user?.email === "admin@saintaugustin.com") {
@@ -45,7 +46,7 @@ export default async function AdminCompositionsPage() {
     } catch {}
 
     try {
-      const r = await supabase.from("composition_subjects").select("*").order("created_at", { ascending: false });
+      const r = await adminClient.from("composition_subjects").select("*").order("created_at", { ascending: false });
       subjects = r.data || [];
     } catch {}
   } catch {}
