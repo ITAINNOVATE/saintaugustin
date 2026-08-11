@@ -52,7 +52,7 @@ export default function LoginPage() {
           .eq("id", data.user.id)
           .single();
         
-        const profile = profileRes?.data || { role: "admin", is_active: true, first_name: "Administrateur" };
+        const profile = profileRes?.data || { role: "apprenant", is_active: true, first_name: "Apprenant" };
 
         if (profile && profile.is_active === false) {
           await supabase.auth.signOut();
@@ -123,6 +123,19 @@ export default function LoginPage() {
       if (signUpError) {
         setError(signUpError.message || "Erreur lors de l'inscription.");
         return;
+      }
+
+      // Insérer le profil dans la table profiles avec le rôle apprenant
+      if (data.user) {
+        await supabase.from("profiles").upsert({
+          id: data.user.id,
+          first_name: firstName,
+          last_name: lastName,
+          email: email,
+          phone: phone || null,
+          role: "apprenant",
+          is_active: true,
+        });
       }
 
       document.cookie = "demo_role=apprenant; path=/";

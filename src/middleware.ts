@@ -65,7 +65,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Fetch user role from profile
-  let role = "admin"; // Default to admin if no profile found yet (new account)
+  let role = "apprenant"; // Default to apprenant for new accounts without a profile yet
   let moduleAccesses: string[] | null = null;
   try {
     let profileRes = await supabase
