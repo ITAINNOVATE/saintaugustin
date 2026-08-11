@@ -5,8 +5,9 @@ import { MoniteurEvaluations } from "@/components/conduite/MoniteurEvaluations";
 export const metadata = { title: "Évaluations Conduite | Admin" };
 
 export default async function AdminConduitePage() {
-  const { createClient } = await import("@/lib/supabase/server");
+  const { createClient, createAdminClient } = await import("@/lib/supabase/server");
   const supabase = await createClient();
+  const adminClient = await createAdminClient();
 
   let user: any = null;
   try { const r = await supabase.auth.getUser(); user = r.data?.user ?? null; } catch {}
@@ -14,20 +15,20 @@ export default async function AdminConduitePage() {
   let profile = { first_name: "Administrateur", last_name: "Saint Augustin", role: "admin" };
   try {
     if (user) {
-      const res: any = await supabase.from("profiles").select("first_name, last_name, role").eq("id", user.id).single();
+      const res: any = await adminClient.from("profiles").select("first_name, last_name, role").eq("id", user.id).single();
       if (res?.data) Object.assign(profile, res.data);
     }
   } catch {}
 
   let students: any[] = [];
   try {
-    const res = await supabase.from("students").select("*").order("created_at", { ascending: false });
+    const res = await adminClient.from("students").select("*").order("created_at", { ascending: false });
     students = res.data || [];
   } catch {}
 
   let evaluations: any[] = [];
   try {
-    const res = await supabase.from("driving_evaluations").select("*, students(id, first_name, last_name, matricule)").order("created_at", { ascending: false });
+    const res = await adminClient.from("driving_evaluations").select("*, students(id, first_name, last_name, matricule)").order("created_at", { ascending: false });
     evaluations = res.data || [];
   } catch {}
 
