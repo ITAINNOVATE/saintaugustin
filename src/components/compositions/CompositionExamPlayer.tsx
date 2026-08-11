@@ -238,7 +238,6 @@ export function CompositionExamPlayer({ subject, questions, studentId }: Composi
         <video
           key={subject.audio_url}
           ref={audioRef as any}
-          src={subject.audio_url}
           controls
           playsInline
           className="w-full h-full object-contain"
@@ -246,7 +245,21 @@ export function CompositionExamPlayer({ subject, questions, studentId }: Composi
           onEnded={handleAudioEnded}
           onPlay={() => setIsPlayingAudio(true)}
           onPause={() => setIsPlayingAudio(false)}
-        />
+        >
+          {subject.audio_url && (
+            <source
+              src={subject.audio_url}
+              type={
+                subject.audio_url.toLowerCase().endsWith(".mp3") ? "audio/mpeg" :
+                subject.audio_url.toLowerCase().endsWith(".webm") ? "video/webm" :
+                subject.audio_url.toLowerCase().endsWith(".ogg") ? "video/ogg" :
+                subject.audio_url.toLowerCase().endsWith(".mpg") || subject.audio_url.toLowerCase().endsWith(".mpeg") ? "video/mpeg" :
+                "video/mp4"
+              }
+            />
+          )}
+          Votre navigateur ne supporte pas la lecture vidéo.
+        </video>
       </div>
 
       {/* TOP HEADER CONTROLS BAR */}

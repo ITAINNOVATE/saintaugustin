@@ -132,10 +132,20 @@ export default function LoginPage() {
           id: data.user.id,
           first_name: firstName,
           last_name: lastName,
-          email: email,
           phone: phone || null,
           role: "apprenant",
           is_active: true,
+        } as any);
+
+        // Créer aussi l'entrée dans la table students
+        // @ts-ignore
+        await supabase.from("students").upsert({
+          user_id: data.user.id,
+          first_name: firstName,
+          last_name: lastName,
+          email: email,
+          phone: phone || null,
+          status: "active",
         } as any);
       }
 
