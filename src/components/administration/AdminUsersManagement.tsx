@@ -20,13 +20,23 @@ interface AdminUsersManagementProps {
 }
 
 const AVAILABLE_MODULES = [
-  { id: "/secretaire", label: "Tableau de bord Secrétaire" },
+  { id: "/secretaire", label: "Gestion des Inscriptions & Apprenants" },
   { id: "/admin/abonnements", label: "Gestion des Abonnements" },
-  { id: "/admin/permis", label: "Gestion des Permis" },
-  { id: "/admin/examens", label: "Gestion des Examens" },
-  { id: "/admin/compositions", label: "Gestion des Compositions" },
-  { id: "/moniteur", label: "Espace Moniteur" },
+  { id: "/admin/permis", label: "Gestion des Permis & Délivrances" },
+  { id: "/admin/examens", label: "Gestion des Examens Blancs" },
+  { id: "/admin/compositions", label: "Gestion des Compositions E-Exam" },
+  { id: "/moniteur", label: "Espace Moniteur & Suivi Conduite" },
+  { id: "/admin/cours", label: "Gestion des Cours" },
+  { id: "/admin/statistiques", label: "Statistiques & Rapports" },
 ];
+
+const getDefaultAccessesForRole = (role: UserRole): string[] => {
+  if (role === "secretaire") return ["/secretaire", "/admin/abonnements", "/admin/permis"];
+  if (role === "moniteur") return ["/moniteur"];
+  if (role === "directeur") return ["/secretaire", "/admin/abonnements", "/admin/permis", "/admin/examens", "/admin/compositions", "/moniteur", "/admin/cours", "/admin/statistiques"];
+  if (role === "admin") return ["/secretaire", "/admin/abonnements", "/admin/permis", "/admin/examens", "/admin/compositions", "/moniteur", "/admin/cours", "/admin/statistiques"];
+  return [];
+};
 
 export function AdminUsersManagement({ profiles: initialProfiles, currentUserId }: AdminUsersManagementProps) {
   const [profiles, setProfiles] = useState(initialProfiles);
@@ -90,22 +100,33 @@ export function AdminUsersManagement({ profiles: initialProfiles, currentUserId 
   const handleToggleModuleAccess = async (moduleId: string) => {
     if (!selectedProfile) return;
     
-    // Copy current accesses
-    let currentAccesses = selectedProfile.module_accesses || [];
-    
-    if (currentAccesses.includes(moduleId)) {
-      currentAccesses = currentAccesses.filter(a => a !== moduleId);
+    // Copy current accesses (or default accesses if empty)
+    const baseAccesses = selectedProfile.module_accesses && selectedProfile.module_accesses.length > 0
+      ? selectedProfile.module_accesses
+      : getDefaultAccessesForRole(selectedProfile.role);
+
+    let newAccesses: string[] = [];
+    if (baseAccesses.includes(moduleId)) {
+      newAccesses = baseAccesses.filter(a => a !== moduleId);
     } else {
-      currentAccesses = [...currentAccesses, moduleId];
+      newAccesses = [...baseAccesses, moduleId];
     }
 
     // Update optimistic UI
-    setSelectedProfile({ ...selectedProfile, module_accesses: currentAccesses });
-    setProfiles(prev => prev.map(p => p.id === selectedProfile.id ? { ...p, module_accesses: currentAccesses } : p));
+    const updatedProfile = { ...selectedProfile, module_accesses: newAccesses };
+    setSelectedProfile(updatedProfile);
+    setProfiles(prev => prev.map(p => p.id === selectedProfile.id ? updatedProfile : p));
 
     // Update DB
-    // @ts-ignore
-    await supabase.from("profiles").update({ module_accesses: currentAccesses } as any).eq("id", selectedProfile.id);
+    const { error } = await (supabase.from("profiles") as any)
+      .update({ module_accesses: newAccesses })
+      .eq("id", selectedProfile.id);
+
+    if (error) {
+      toast({ title: "Erreur lors de la mise à jour", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Accès mis à jour !", description: `Les accès de ${selectedProfile.first_name} ont été modifiés.` });
+    }
   };
 
   const handleDeleteProfile = async () => {
@@ -313,15 +334,30 @@ export function AdminUsersManagement({ profiles: initialProfiles, currentUserId 
               Par défaut, ce rôle a des accès standards. Vous pouvez activer ci-dessous des modules supplémentaires pour cet utilisateur spécifiquement, ou lui retirer l'accès en décochant.
             </p>
             
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {AVAILABLE_MODULES.map(module => {
-                const isEnabled = (selectedProfile?.module_accesses || []).includes(module.id);
+                const effectiveAccesses = selectedProfile?.module_accesses && selectedProfile.module_accesses.length > 0
+                  ? selectedProfile.module_accesses
+                  : getDefaultAccessesForRole(selectedProfile?.role || "secretaire");
+                
+                const isEnabled = effectiveAccesses.includes(module.id);
                 return (
-                  <div key={module.id} className="flex items-center justify-between bg-background border p-3 rounded-xl">
-                    <Label className="font-medium cursor-pointer" htmlFor={`switch-${module.id}`}>
-                      {module.label}
-                    </Label>
-                    <Switch 
+                  <div
+                    key={module.id}
+                    onClick={() => handleToggleModuleAccess(module.id)}
+                    className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none ${
+                      isEnabled
+                        ? "bg-[#0A1628]/5 border-[#F5A623] dark:bg-amber-950/20 shadow-sm"
+                        : "bg-background border-border opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className={`w-2.5 h-2.5 rounded-full ${isEnabled ? "bg-[#F5A623]" : "bg-gray-300 dark:bg-gray-700"}`} />
+                      <Label className="font-semibold text-sm cursor-pointer text-foreground">
+                        {module.label}
+                      </Label>
+                    </div>
+                    <Switch
                       id={`switch-${module.id}`}
                       checked={isEnabled}
                       onCheckedChange={() => handleToggleModuleAccess(module.id)}
