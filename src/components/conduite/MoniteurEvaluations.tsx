@@ -22,6 +22,9 @@ import {
   FileCheck,
   Plus,
   Clock,
+  History,
+  Edit,
+  Eye,
 } from "lucide-react";
 import type { Student, DrivingEvaluation, GradeRating } from "@/types/database";
 
@@ -65,7 +68,21 @@ export function MoniteurEvaluations({ students, initialEvaluations, instructorId
   const [evaluations, setEvaluations] = useState<DrivingEvaluation[]>(initialEvaluations);
   const [search, setSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  
+  // Dialog visibility states
+  const [showInitModal, setShowInitModal] = useState(false);
   const [showEvalDialog, setShowEvalDialog] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  
+  // Evaluation Date & Time
+  const now = new Date();
+  const defaultDate = now.toISOString().split("T")[0];
+  const defaultTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  
+  const [evalDate, setEvalDate] = useState(defaultDate);
+  const [evalTime, setEvalTime] = useState(defaultTime);
+  const [editingEvalId, setEditingEvalId] = useState<string | null>(null);
+
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const supabase = createClient();
@@ -85,28 +102,60 @@ export function MoniteurEvaluations({ students, initialEvaluations, instructorId
     return !q || name.includes(q) || s.matricule.toLowerCase().includes(q);
   });
 
-  const handleOpenEvaluation = (student: Student) => {
+  // Step 1: Open Date & Time Modal to Create a New Evaluation Session
+  const handleOpenCreateSession = (student: Student) => {
     setSelectedStudent(student);
-    // Pre-fill existing evaluation if available
-    const existing = evaluations.find(e => e.student_id === student.id);
-    if (existing) {
-      setGrades({
-        ml1: existing.ml1 || "Passable", ml2: existing.ml2 || "Passable", ml3: existing.ml3 || "Passable",
-        r1: existing.r1 || "Passable", r2: existing.r2 || "Passable", r3: existing.r3 || "Passable",
-        zigzag1: existing.zigzag1 || "Passable", zigzag2: existing.zigzag2 || "Passable", zigzag3: existing.zigzag3 || "Passable",
-        cr1: existing.cr1 || "Passable", cr2: existing.cr2 || "Passable", cr3: existing.cr3 || "Passable",
-      });
-      setComments(existing.comments || "");
-    } else {
-      setGrades({
-        ml1: "Passable", ml2: "Passable", ml3: "Passable",
-        r1: "Passable", r2: "Passable", r3: "Passable",
-        zigzag1: "Passable", zigzag2: "Passable", zigzag3: "Passable",
-        cr1: "Passable", cr2: "Passable", cr3: "Passable",
-      });
-      setComments("");
-    }
+    setEditingEvalId(null);
+    const n = new Date();
+    setEvalDate(n.toISOString().split("T")[0]);
+    setEvalTime(`${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`);
+    setGrades({
+      ml1: "Passable", ml2: "Passable", ml3: "Passable",
+      r1: "Passable", r2: "Passable", r3: "Passable",
+      zigzag1: "Passable", zigzag2: "Passable", zigzag3: "Passable",
+      cr1: "Passable", cr2: "Passable", cr3: "Passable",
+    });
+    setComments("");
+    setShowInitModal(true);
+  };
+
+  // Step 2: Confirm Date/Time and Proceed to Evaluation Form
+  const handleProceedToEvaluation = () => {
+    setShowInitModal(false);
     setShowEvalDialog(true);
+  };
+
+  // Open existing evaluation for editing
+  const handleOpenEditSession = (ev: DrivingEvaluation, student: Student) => {
+    setSelectedStudent(student);
+    setEditingEvalId(ev.id);
+    setEvalDate(ev.evaluation_date || defaultDate);
+    
+    // Extract time if embedded in comments
+    const timeMatch = ev.comments?.match(/\[Heure:\s*(\d{2}:\d{2})\]/);
+    if (timeMatch) {
+      setEvalTime(timeMatch[1]);
+      setComments(ev.comments?.replace(/\[Heure:\s*\d{2}:\d{2}\]\s*/, "") || "");
+    } else {
+      setEvalTime(defaultTime);
+      setComments(ev.comments || "");
+    }
+
+    setGrades({
+      ml1: ev.ml1 || "Passable", ml2: ev.ml2 || "Passable", ml3: ev.ml3 || "Passable",
+      r1: ev.r1 || "Passable", r2: ev.r2 || "Passable", r3: ev.r3 || "Passable",
+      zigzag1: ev.zigzag1 || "Passable", zigzag2: ev.zigzag2 || "Passable", zigzag3: ev.zigzag3 || "Passable",
+      cr1: ev.cr1 || "Passable", cr2: ev.cr2 || "Passable", cr3: ev.cr3 || "Passable",
+    });
+
+    setShowHistoryDialog(false);
+    setShowEvalDialog(true);
+  };
+
+  // Open History Dialog
+  const handleOpenHistory = (student: Student) => {
+    setSelectedStudent(student);
+    setShowHistoryDialog(true);
   };
 
   const handleSaveEvaluation = async (e: React.FormEvent) => {
@@ -114,22 +163,23 @@ export function MoniteurEvaluations({ students, initialEvaluations, instructorId
     if (!selectedStudent) return;
 
     startTransition(async () => {
+      const cleanComments = comments.replace(/\[Heure:\s*\d{2}:\d{2}\]\s*/g, "").trim();
+      const formattedComments = `[Heure: ${evalTime}] ${cleanComments}`.trim();
+
       const payload = {
         student_id: selectedStudent.id,
         instructor_id: instructorId && instructorId !== "moniteur" ? instructorId : null,
-        evaluation_date: new Date().toISOString().split("T")[0],
+        evaluation_date: evalDate,
         ...grades,
-        comments,
+        comments: formattedComments,
       };
 
-      const existing = evaluations.find(e => e.student_id === selectedStudent.id);
-      
       let resData: any = null;
 
-      if (existing) {
+      if (editingEvalId) {
         const { data } = await (supabase.from("driving_evaluations") as any)
           .update(payload)
-          .eq("id", existing.id)
+          .eq("id", editingEvalId)
           .select("*, students(id, first_name, last_name, matricule)")
           .single();
         resData = data;
@@ -142,32 +192,34 @@ export function MoniteurEvaluations({ students, initialEvaluations, instructorId
       }
 
       const finalEval: DrivingEvaluation = resData || {
-        id: existing ? existing.id : `eval-${Date.now()}`,
+        id: editingEvalId || `eval-${Date.now()}`,
         ...payload,
         created_at: new Date().toISOString(),
         students: selectedStudent,
       };
 
       setEvaluations(prev => {
-        const idx = prev.findIndex(e => e.student_id === selectedStudent.id);
-        if (idx >= 0) {
-          const copy = [...prev];
-          copy[idx] = finalEval;
-          return copy;
+        if (editingEvalId) {
+          return prev.map(e => e.id === editingEvalId ? finalEval : e);
         }
         return [finalEval, ...prev];
       });
 
       toast({
-        title: "Évaluation de conduite enregistrée !",
-        description: `Les notes de ${selectedStudent.first_name} ${selectedStudent.last_name} ont été enregistrées.`,
+        title: editingEvalId ? "Évaluation mise à jour !" : "Nouvelle séance d'évaluation créée !",
+        description: `Évaluation enregistrée pour ${selectedStudent.first_name} ${selectedStudent.last_name} (${evalDate} à ${evalTime}).`,
       });
       setShowEvalDialog(false);
     });
   };
 
-  const getStudentEvaluation = (studentId: string) => {
-    return evaluations.find(e => e.student_id === studentId);
+  const getStudentEvaluations = (studentId: string) => {
+    return evaluations.filter(e => e.student_id === studentId);
+  };
+
+  const getLatestStudentEvaluation = (studentId: string) => {
+    const list = getStudentEvaluations(studentId);
+    return list.length > 0 ? list[0] : null;
   };
 
   const getRatingBadge = (rating?: GradeRating) => {
@@ -237,7 +289,8 @@ export function MoniteurEvaluations({ students, initialEvaluations, instructorId
           </Card>
         ) : (
           filteredStudents.map((st) => {
-            const ev = getStudentEvaluation(st.id);
+            const stEvals = getStudentEvaluations(st.id);
+            const latestEv = stEvals[0] || null;
             return (
               <Card key={st.id} className="overflow-hidden hover:border-[#F5A623] transition-all">
                 <CardHeader className="p-4 bg-muted/40 border-b flex flex-row items-center justify-between pb-3">
@@ -250,28 +303,29 @@ export function MoniteurEvaluations({ students, initialEvaluations, instructorId
                       <p className="text-xs font-mono text-muted-foreground">{st.matricule}</p>
                     </div>
                   </div>
-                  {ev ? (
+                  {stEvals.length > 0 ? (
                     <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[11px] font-bold">
-                      ✓ Évalué
+                      ✓ {stEvals.length} séance(s)
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[11px]">
-                      En attente
+                      0 séance
                     </Badge>
                   )}
                 </CardHeader>
 
                 <CardContent className="p-4 space-y-3">
-                  {ev ? (
+                  {latestEv ? (
                     <div className="space-y-2 text-xs">
                       <div className="grid grid-cols-2 gap-2 p-2 bg-muted/30 rounded-xl">
-                        <div><span className="text-muted-foreground">ML (Marche Lente):</span> {getRatingBadge(ev.ml1)}</div>
-                        <div><span className="text-muted-foreground">R (Créneau):</span> {getRatingBadge(ev.r1)}</div>
-                        <div><span className="text-muted-foreground">ZigZag:</span> {getRatingBadge(ev.zigzag1)}</div>
-                        <div><span className="text-muted-foreground">CR (Circulation):</span> {getRatingBadge(ev.cr1)}</div>
+                        <div><span className="text-muted-foreground">ML:</span> {getRatingBadge(latestEv.ml1)}</div>
+                        <div><span className="text-muted-foreground">Créneau:</span> {getRatingBadge(latestEv.r1)}</div>
+                        <div><span className="text-muted-foreground">ZigZag:</span> {getRatingBadge(latestEv.zigzag1)}</div>
+                        <div><span className="text-muted-foreground">Circulation:</span> {getRatingBadge(latestEv.cr1)}</div>
                       </div>
-                      <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                        <Calendar className="h-3 w-3" /> Évalué le {formatDate(ev.evaluation_date)}
+                      <p className="text-[11px] text-muted-foreground flex items-center justify-between">
+                        <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Dernière: {formatDate(latestEv.evaluation_date)}</span>
+                        <span className="font-bold text-[#F5A623]">{stEvals.length} évaluation(s)</span>
                       </p>
                     </div>
                   ) : (
@@ -280,13 +334,27 @@ export function MoniteurEvaluations({ students, initialEvaluations, instructorId
                     </p>
                   )}
 
-                  <Button
-                    onClick={() => handleOpenEvaluation(st)}
-                    className="w-full bg-[#0A1628] text-white hover:bg-[#1E4070] font-bold rounded-xl text-xs gap-2"
-                  >
-                    <Star className="h-3.5 w-3.5 text-[#F5A623]" />
-                    {ev ? "Modifier l'Évaluation" : "Évaluer cet Apprenant"}
-                  </Button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    <Button
+                      onClick={() => handleOpenCreateSession(st)}
+                      className="w-full bg-[#F5A623] text-[#0A1628] hover:bg-[#F9CC74] font-extrabold rounded-xl text-xs gap-1.5"
+                    >
+                      <Plus className="h-4 w-4" /> Évaluer
+                    </Button>
+                    {stEvals.length > 0 ? (
+                      <Button
+                        onClick={() => handleOpenHistory(st)}
+                        variant="outline"
+                        className="w-full font-bold rounded-xl text-xs gap-1.5 border-border hover:bg-muted"
+                      >
+                        <History className="h-3.5 w-3.5" /> Historique ({stEvals.length})
+                      </Button>
+                    ) : (
+                      <Button disabled variant="outline" className="w-full text-xs font-medium rounded-xl opacity-50">
+                        0 Historique
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             );
@@ -294,17 +362,77 @@ export function MoniteurEvaluations({ students, initialEvaluations, instructorId
         )}
       </div>
 
-      {/* EVALUATION FORM DIALOG */}
+      {/* STEP 1: DATE & TIME SELECTION DIALOG */}
+      <Dialog open={showInitModal} onOpenChange={setShowInitModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-[#F5A623]" />
+              Nouvelle Séance d&apos;Évaluation
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground">
+              Apprenant : <strong className="text-foreground">{selectedStudent?.first_name} {selectedStudent?.last_name}</strong> ({selectedStudent?.matricule})
+            </p>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-3">
+            <div className="space-y-2">
+              <Label htmlFor="evalDate" className="text-xs font-semibold">
+                Date de la séance d&apos;évaluation
+              </Label>
+              <Input
+                id="evalDate"
+                type="date"
+                value={evalDate}
+                onChange={(e) => setEvalDate(e.target.value)}
+                className="rounded-xl"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="evalTime" className="text-xs font-semibold">
+                Heure de la séance
+              </Label>
+              <Input
+                id="evalTime"
+                type="time"
+                value={evalTime}
+                onChange={(e) => setEvalTime(e.target.value)}
+                className="rounded-xl"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setShowInitModal(false)} className="rounded-xl">
+                Annuler
+              </Button>
+              <Button
+                onClick={handleProceedToEvaluation}
+                className="bg-[#F5A623] text-[#0A1628] hover:bg-[#F9CC74] font-extrabold rounded-xl px-6 gap-2"
+              >
+                Accéder à la grille d&apos;évaluation →
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* STEP 2: 12 RUBRICS EVALUATION FORM DIALOG */}
       <Dialog open={showEvalDialog} onOpenChange={setShowEvalDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              <Car className="h-5 w-5 text-[#F5A623]" />
-              Évaluation Conduite — {selectedStudent?.first_name} {selectedStudent?.last_name}
+            <DialogTitle className="text-xl font-bold flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Car className="h-5 w-5 text-[#F5A623]" />
+                Évaluation Conduite — {selectedStudent?.first_name} {selectedStudent?.last_name}
+              </span>
             </DialogTitle>
-            <p className="text-xs text-muted-foreground font-mono">
-              Matricule : {selectedStudent?.matricule}
-            </p>
+            <div className="flex items-center gap-2 text-xs font-mono mt-1">
+              <Badge className="bg-[#0A1628] text-white">
+                Séance du {formatDate(evalDate)} à {evalTime}
+              </Badge>
+              <span className="text-muted-foreground">Matricule : {selectedStudent?.matricule}</span>
+            </div>
           </DialogHeader>
 
           <form onSubmit={handleSaveEvaluation} className="space-y-6 mt-4">
@@ -355,7 +483,7 @@ export function MoniteurEvaluations({ students, initialEvaluations, instructorId
               <Textarea
                 id="comments"
                 rows={3}
-                placeholder="Indiquez vos conseils de conduite pour l'apprenant (ex: Améliorer les contrôles de rétroviseur)..."
+                placeholder="Indiquez vos conseils de conduite pour l'apprenant pour cette séance..."
                 value={comments}
                 onChange={(e) => setComments(e.target.value)}
                 className="text-sm rounded-xl"
@@ -371,6 +499,93 @@ export function MoniteurEvaluations({ students, initialEvaluations, instructorId
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* STEP 3: SESSION HISTORY DIALOG */}
+      <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
+        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <History className="h-5 w-5 text-[#F5A623]" />
+              Historique des Évaluations — {selectedStudent?.first_name} {selectedStudent?.last_name}
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground font-mono">
+              Matricule : {selectedStudent?.matricule}
+            </p>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-3">
+            {selectedStudent && getStudentEvaluations(selectedStudent.id).length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-6">Aucune séance d&apos;évaluation enregistrée.</p>
+            ) : (
+              getStudentEvaluations(selectedStudent?.id || "").map((ev, idx) => {
+                const timeMatch = ev.comments?.match(/\[Heure:\s*(\d{2}:\d{2})\]/);
+                const sessionTime = timeMatch ? timeMatch[1] : null;
+                const cleanComm = ev.comments?.replace(/\[Heure:\s*\d{2}:\d{2}\]\s*/, "") || "";
+
+                return (
+                  <div key={ev.id} className="p-4 border rounded-2xl bg-card space-y-3 shadow-sm">
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-[#0A1628] text-white text-xs">
+                          Séance n°{getStudentEvaluations(selectedStudent?.id || "").length - idx}
+                        </Badge>
+                        <span className="text-xs font-bold text-foreground">
+                          {formatDate(ev.evaluation_date)} {sessionTime ? `à ${sessionTime}` : ""}
+                        </span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleOpenEditSession(ev, selectedStudent!)}
+                        className="h-7 text-xs gap-1 border-amber-300 text-amber-900 bg-amber-50 hover:bg-amber-100 font-bold"
+                      >
+                        <Edit className="h-3 w-3" /> Éditer
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                      <div className="p-2 bg-muted/40 rounded-xl">
+                        <span className="text-muted-foreground block text-[10px]">Marche Lente:</span>
+                        <span className="font-bold text-[#F5A623]">{ev.ml1 || "Passable"}</span>
+                      </div>
+                      <div className="p-2 bg-muted/40 rounded-xl">
+                        <span className="text-muted-foreground block text-[10px]">Créneau:</span>
+                        <span className="font-bold text-[#F5A623]">{ev.r1 || "Passable"}</span>
+                      </div>
+                      <div className="p-2 bg-muted/40 rounded-xl">
+                        <span className="text-muted-foreground block text-[10px]">ZigZag:</span>
+                        <span className="font-bold text-[#F5A623]">{ev.zigzag1 || "Passable"}</span>
+                      </div>
+                      <div className="p-2 bg-muted/40 rounded-xl">
+                        <span className="text-muted-foreground block text-[10px]">Circulation:</span>
+                        <span className="font-bold text-[#F5A623]">{ev.cr1 || "Passable"}</span>
+                      </div>
+                    </div>
+
+                    {cleanComm && (
+                      <p className="text-xs text-muted-foreground italic bg-muted/20 p-2.5 rounded-xl border">
+                        💬 « {cleanComm} »
+                      </p>
+                    )}
+                  </div>
+                );
+              })
+            )}
+
+            <div className="flex justify-between items-center pt-3 border-t">
+              <Button
+                onClick={() => { setShowHistoryDialog(false); handleOpenCreateSession(selectedStudent!); }}
+                className="bg-[#F5A623] text-[#0A1628] hover:bg-[#F9CC74] font-extrabold rounded-xl text-xs gap-1"
+              >
+                <Plus className="h-4 w-4" /> Nouvelle Séance
+              </Button>
+              <Button variant="outline" onClick={() => setShowHistoryDialog(false)} className="rounded-xl text-xs">
+                Fermer
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

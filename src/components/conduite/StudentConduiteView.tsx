@@ -1,14 +1,16 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Car, Award, Calendar, CheckCircle2, AlertCircle, Info, ShieldCheck } from "lucide-react";
+import { Car, Info, ShieldCheck, History } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import type { DrivingEvaluation, GradeRating } from "@/types/database";
 
 interface StudentConduiteViewProps {
-  evaluation: DrivingEvaluation | null;
+  evaluations?: DrivingEvaluation[];
+  evaluation?: DrivingEvaluation | null;
   studentName: string;
   matricule: string;
 }
@@ -55,7 +57,16 @@ const GRADE_STYLES: Record<GradeRating, { color: string; bg: string; border: str
   "Très Bien": { color: "text-green-700 dark:text-green-400", bg: "bg-green-100 dark:bg-green-950/60", border: "border-green-300" },
 };
 
-export function StudentConduiteView({ evaluation, studentName, matricule }: StudentConduiteViewProps) {
+export function StudentConduiteView({ evaluations: initialEvals, evaluation: singleEval, studentName, matricule }: StudentConduiteViewProps) {
+  const allEvals = initialEvals && initialEvals.length > 0
+    ? initialEvals
+    : singleEval
+    ? [singleEval]
+    : [];
+
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const currentEval = allEvals[selectedIdx] || null;
+
   // Compute global score percentage from grades
   const getRatingPoints = (r?: GradeRating) => {
     if (r === "Très Bien") return 4;
@@ -68,10 +79,10 @@ export function StudentConduiteView({ evaluation, studentName, matricule }: Stud
   let totalPoints = 0;
   let totalRubrics = 0;
 
-  if (evaluation) {
+  if (currentEval) {
     const keys = ["ml1", "ml2", "ml3", "r1", "r2", "r3", "zigzag1", "zigzag2", "zigzag3", "cr1", "cr2", "cr3"];
     keys.forEach((k) => {
-      const val = (evaluation as any)[k] as GradeRating | undefined;
+      const val = (currentEval as any)[k] as GradeRating | undefined;
       if (val) {
         totalPoints += getRatingPoints(val);
         totalRubrics++;
@@ -80,6 +91,10 @@ export function StudentConduiteView({ evaluation, studentName, matricule }: Stud
   }
 
   const globalPercent = totalRubrics > 0 ? Math.round((totalPoints / (totalRubrics * 4)) * 100) : 0;
+
+  const timeMatch = currentEval?.comments?.match(/\[Heure:\s*(\d{2}:\d{2})\]/);
+  const sessionTime = timeMatch ? timeMatch[1] : null;
+  const cleanComments = currentEval?.comments?.replace(/\[Heure:\s*\d{2}:\d{2}\]\s*/, "") || "";
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in pb-12">
@@ -91,19 +106,19 @@ export function StudentConduiteView({ evaluation, studentName, matricule }: Stud
           </div>
           <div>
             <span className="text-[10px] font-bold text-[#F5A623] uppercase tracking-wider">
-              Espace Apprenant • Mode Consultation
+              Espace Apprenant • Carnet de Conduite
             </span>
-            <h1 className="text-xl font-bold">Mon Carnet d&apos;Évaluation de Conduite</h1>
+            <h1 className="text-xl font-bold">Mes Évaluations de Conduite ({allEvals.length} séance{allEvals.length > 1 ? "s" : ""})</h1>
           </div>
         </div>
 
         <Badge variant="outline" className="border-white/30 text-white text-xs font-semibold px-3 py-1">
-          🔒 Lecture Seule
+          🔒 Consultable uniquement
         </Badge>
       </div>
 
       {/* Main Scorecard Card */}
-      {!evaluation ? (
+      {allEvals.length === 0 ? (
         <Card className="p-12 text-center border-2 border-dashed border-border rounded-3xl">
           <Car className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-40" />
           <h2 className="text-lg font-bold text-foreground mb-1">Aucune évaluation enregistrée</h2>
@@ -113,21 +128,55 @@ export function StudentConduiteView({ evaluation, studentName, matricule }: Stud
         </Card>
       ) : (
         <div className="space-y-6">
+          {/* Multi-Session Selector Tabs if more than 1 session */}
+          {allEvals.length > 1 && (
+            <div className="flex items-center gap-2 overflow-x-auto pb-2">
+              <span className="text-xs font-bold text-muted-foreground flex items-center gap-1 flex-shrink-0 mr-1">
+                <History className="h-3.5 w-3.5" /> Séances :
+              </span>
+              {allEvals.map((ev, idx) => {
+                const tm = ev.comments?.match(/\[Heure:\s*(\d{2}:\d{2})\]/);
+                const isSel = idx === selectedIdx;
+                return (
+                  <button
+                    key={ev.id}
+                    type="button"
+                    onClick={() => setSelectedIdx(idx)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap border ${
+                      isSel
+                        ? "bg-[#F5A623] text-[#0A1628] border-[#F5A623] shadow-sm ring-2 ring-offset-1 ring-[#F5A623]"
+                        : "bg-card text-muted-foreground border-border hover:text-foreground"
+                    }`}
+                  >
+                    Séance {allEvals.length - idx} — {formatDate(ev.evaluation_date)} {tm ? `(${tm[1]})` : ""}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {/* Summary Banner */}
           <Card className="overflow-hidden border-2 border-[#F5A623] bg-gradient-to-r from-[#0A1628] via-[#0F2A53] to-[#1E4070] text-white shadow-xl rounded-3xl">
             <CardContent className="p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="space-y-2 text-center md:text-left">
-                <Badge className="bg-[#F5A623] text-[#0A1628] font-extrabold text-xs px-3 py-1 rounded-full uppercase">
-                  Maîtrise Globale du Véhicule
-                </Badge>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge className="bg-[#F5A623] text-[#0A1628] font-extrabold text-xs px-3 py-1 rounded-full uppercase">
+                    Séance n°{allEvals.length - selectedIdx} sur {allEvals.length}
+                  </Badge>
+                  {selectedIdx === 0 && (
+                    <Badge variant="outline" className="border-green-400 text-green-300 text-[10px] font-bold">
+                      Dernière Séance
+                    </Badge>
+                  )}
+                </div>
                 <h2 className="text-2xl md:text-3xl font-extrabold">{studentName}</h2>
                 <p className="text-white/80 text-xs font-mono">
-                  Matricule : {matricule} • Évalué le {formatDate(evaluation.evaluation_date)}
+                  Matricule : {matricule} • Évalué le {formatDate(currentEval?.evaluation_date || "")} {sessionTime ? `à ${sessionTime}` : ""}
                 </p>
               </div>
 
               <div className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-2xl text-center min-w-[160px]">
-                <p className="text-xs uppercase font-bold text-[#F5A623]">Niveau Pratique</p>
+                <p className="text-xs uppercase font-bold text-[#F5A623]">Maîtrise du Véhicule</p>
                 <p className="text-4xl font-extrabold my-1">{globalPercent}%</p>
                 <Progress value={globalPercent} className="h-2 bg-white/20" />
               </div>
@@ -145,7 +194,7 @@ export function StudentConduiteView({ evaluation, studentName, matricule }: Stud
                 </CardHeader>
                 <CardContent className="p-4 space-y-3">
                   {group.items.map((item) => {
-                    const grade = (evaluation as any)[item.key] as GradeRating | undefined;
+                    const grade = (currentEval as any)[item.key] as GradeRating | undefined;
                     const style = grade ? GRADE_STYLES[grade] : GRADE_STYLES["Passable"];
                     return (
                       <div
@@ -175,13 +224,13 @@ export function StudentConduiteView({ evaluation, studentName, matricule }: Stud
           </div>
 
           {/* Instructor Comments */}
-          {evaluation.comments && (
+          {cleanComments && (
             <Card className="p-5 border-2 border-border rounded-2xl bg-amber-50/50 dark:bg-amber-950/20">
               <h3 className="font-bold text-sm text-[#F5A623] mb-2 flex items-center gap-2">
-                <Info className="h-4 w-4" /> Remarques & Conseils de votre Moniteur :
+                <Info className="h-4 w-4" /> Remarques & Conseils de votre Moniteur (Séance du {formatDate(currentEval?.evaluation_date || "")}) :
               </h3>
               <p className="text-sm text-foreground leading-relaxed italic font-medium">
-                « {evaluation.comments} »
+                « {cleanComments} »
               </p>
             </Card>
           )}

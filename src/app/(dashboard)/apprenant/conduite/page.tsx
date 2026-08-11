@@ -28,17 +28,22 @@ export default async function ApprenantConduitePage() {
     }
   } catch {}
 
-  let evaluation: any = null;
+  let evaluations: any[] = [];
   try {
     if (studentId) {
-      const res: any = await adminSupabase.from("driving_evaluations").select("*").eq("student_id", studentId).single();
-      evaluation = res?.data || null;
+      const res: any = await adminSupabase
+        .from("driving_evaluations")
+        .select("*")
+        .eq("student_id", studentId)
+        .order("evaluation_date", { ascending: false })
+        .order("created_at", { ascending: false });
+      evaluations = res?.data || [];
     }
   } catch {}
 
   return (
     <DashboardLayout userRole={profile.role as any} userName={`${profile.first_name} ${profile.last_name}`} pageTitle="Cours Conduite">
-      <StudentConduiteView evaluation={evaluation as any} studentName={`${profile.first_name} ${profile.last_name}`} matricule={matricule} />
+      <StudentConduiteView evaluations={evaluations as any} studentName={`${profile.first_name} ${profile.last_name}`} matricule={matricule} />
     </DashboardLayout>
   );
 }

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -52,11 +53,12 @@ export function StudentsManagement({ students: initialStudents, userRole }: Stud
         .limit(1)
         .maybeSingle();
 
-      // 2. Fetch Driving Evaluation
-      const { data: driving } = await (supabase.from("driving_evaluations") as any)
+      // 2. Fetch Driving Evaluations (Multi-Sessions)
+      const { data: drivings } = await (supabase.from("driving_evaluations") as any)
         .select("*")
         .eq("student_id", student.id)
-        .maybeSingle();
+        .order("evaluation_date", { ascending: false })
+        .order("created_at", { ascending: false });
 
       // 3. Fetch Lesson Progress count
       const { count: progressCount } = await (supabase.from("lesson_progress") as any)
@@ -71,7 +73,7 @@ export function StudentsManagement({ students: initialStudents, userRole }: Stud
 
       setStudentJourney({
         subscription: sub || (student as any).subscriptions?.[0] || null,
-        drivingEvaluation: driving || null,
+        drivingEvaluations: drivings || [],
         progressCount: progressCount || 0,
         attemptsCount: attemptsCount || 0,
       });
@@ -489,39 +491,45 @@ export function StudentsManagement({ students: initialStudents, userRole }: Stud
                 )}
               </div>
 
-              {/* 2. ÉVALUATION DE CONDUITE PRATIQUE */}
+              {/* 2. ÉVALUATIONS DE CONDUITE PRATIQUE (MULTI-SÉANCES) */}
               <div className="p-4 border rounded-2xl bg-card space-y-3 shadow-sm">
-                <h4 className="font-bold text-sm text-foreground flex items-center gap-2 border-b pb-2">
-                  <Car className="h-4 w-4 text-[#F5A623]" /> Bilan & Notes de Conduite Pratique
+                <h4 className="font-bold text-sm text-foreground flex items-center justify-between border-b pb-2">
+                  <span className="flex items-center gap-2">
+                    <Car className="h-4 w-4 text-[#F5A623]" /> Bilan Conduite ({(studentJourney?.drivingEvaluations?.length || 0)} séance(s))
+                  </span>
+                  {studentJourney?.drivingEvaluations?.length > 0 && (
+                    <Badge className="bg-[#0A1628] text-white text-[10px]">
+                      {studentJourney.drivingEvaluations.length} évaluation(s) réalisée(s)
+                    </Badge>
+                  )}
                 </h4>
                 {journeyLoading ? (
-                  <p className="text-xs text-muted-foreground animate-pulse">Chargement de l'évaluation de conduite...</p>
-                ) : studentJourney?.drivingEvaluation ? (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                      <div className="p-2.5 bg-muted/40 rounded-xl">
-                        <span className="text-muted-foreground block text-[11px]">Marche Lente (ML)</span>
-                        <span className="font-extrabold text-xs text-[#F5A623]">{studentJourney.drivingEvaluation.ml1 || "Passable"}</span>
-                      </div>
-                      <div className="p-2.5 bg-muted/40 rounded-xl">
-                        <span className="text-muted-foreground block text-[11px]">Créneau / Rangement</span>
-                        <span className="font-extrabold text-xs text-[#F5A623]">{studentJourney.drivingEvaluation.r1 || "Passable"}</span>
-                      </div>
-                      <div className="p-2.5 bg-muted/40 rounded-xl">
-                        <span className="text-muted-foreground block text-[11px]">Slalom / ZigZag</span>
-                        <span className="font-extrabold text-xs text-[#F5A623]">{studentJourney.drivingEvaluation.zigzag1 || "Passable"}</span>
-                      </div>
-                      <div className="p-2.5 bg-muted/40 rounded-xl">
-                        <span className="text-muted-foreground block text-[11px]">Circulation (CR)</span>
-                        <span className="font-extrabold text-xs text-[#F5A623]">{studentJourney.drivingEvaluation.cr1 || "Passable"}</span>
-                      </div>
-                    </div>
-                    {studentJourney.drivingEvaluation.comments && (
-                      <div className="p-3 bg-muted/30 rounded-xl text-xs border">
-                        <span className="font-bold block text-foreground mb-1">💬 Remarques du Moniteur :</span>
-                        <p className="text-muted-foreground italic">{studentJourney.drivingEvaluation.comments}</p>
-                      </div>
-                    )}
+                  <p className="text-xs text-muted-foreground animate-pulse">Chargement des évaluations de conduite...</p>
+                ) : studentJourney?.drivingEvaluations && studentJourney.drivingEvaluations.length > 0 ? (
+                  <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                    {studentJourney.drivingEvaluations.map((ev: any, idx: number) => {
+                      const timeMatch = ev.comments?.match(/\[Heure:\s*(\d{2}:\d{2})\]/);
+                      const sessionTime = timeMatch ? timeMatch[1] : null;
+                      const cleanComm = ev.comments?.replace(/\[Heure:\s*\d{2}:\d{2}\]\s*/, "") || "";
+                      
+                      return (
+                        <div key={ev.id} className="p-3 bg-muted/30 border rounded-xl space-y-2">
+                          <div className="flex items-center justify-between text-xs font-bold border-b pb-1">
+                            <span className="text-[#F5A623]">Séance n°{studentJourney.drivingEvaluations.length - idx}</span>
+                            <span className="text-muted-foreground">{formatDate(ev.evaluation_date)} {sessionTime ? `à ${sessionTime}` : ""}</span>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-xs">
+                            <div className="p-1.5 bg-background rounded-lg border"><span className="text-muted-foreground text-[10px] block">ML</span><strong className="text-[#F5A623]">{ev.ml1 || "Passable"}</strong></div>
+                            <div className="p-1.5 bg-background rounded-lg border"><span className="text-muted-foreground text-[10px] block">Créneau</span><strong className="text-[#F5A623]">{ev.r1 || "Passable"}</strong></div>
+                            <div className="p-1.5 bg-background rounded-lg border"><span className="text-muted-foreground text-[10px] block">ZigZag</span><strong className="text-[#F5A623]">{ev.zigzag1 || "Passable"}</strong></div>
+                            <div className="p-1.5 bg-background rounded-lg border"><span className="text-muted-foreground text-[10px] block">Circulation</span><strong className="text-[#F5A623]">{ev.cr1 || "Passable"}</strong></div>
+                          </div>
+                          {cleanComm && (
+                            <p className="text-[11px] text-muted-foreground italic bg-background/50 p-2 rounded-lg border">💬 « {cleanComm} »</p>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="p-3 bg-muted/30 text-muted-foreground rounded-xl text-xs">
