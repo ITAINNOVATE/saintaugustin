@@ -6,6 +6,7 @@ import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { createClient } from "@/lib/supabase/client";
 import { Sidebar } from "./Sidebar";
 import type { UserRole } from "@/types/database";
 
@@ -24,6 +25,7 @@ interface DashboardLayoutProps {
   avatarUrl?: string;
   pageTitle?: string;
   notificationCount?: number;
+  moduleAccesses?: string[];
 }
 
 export function DashboardLayout({
@@ -34,12 +36,29 @@ export function DashboardLayout({
   avatarUrl,
   pageTitle,
   notificationCount = 0,
+  moduleAccesses,
 }: DashboardLayoutProps) {
   const { theme, setTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [userAccesses, setUserAccesses] = useState<string[] | undefined>(moduleAccesses);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    const fetchUserAccesses = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await (supabase.from("profiles") as any).select("module_accesses").eq("id", user.id).single();
+          if (profile?.module_accesses) {
+            setUserAccesses(profile.module_accesses);
+          }
+        }
+      } catch {}
+    };
+    fetchUserAccesses();
+  }, [moduleAccesses]);
 
   const initials = userName
     .split(" ")
@@ -57,6 +76,7 @@ export function DashboardLayout({
           userName={userName}
           userEmail={userEmail}
           notificationCount={notificationCount}
+          moduleAccesses={userAccesses}
         />
       </div>
 
@@ -73,6 +93,7 @@ export function DashboardLayout({
               userName={userName}
               userEmail={userEmail}
               notificationCount={notificationCount}
+              moduleAccesses={userAccesses}
               onNavigate={() => setMobileOpen(false)}
             />
           </div>

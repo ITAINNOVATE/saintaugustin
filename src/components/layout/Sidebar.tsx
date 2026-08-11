@@ -69,15 +69,49 @@ interface SidebarProps {
   userName: string;
   userEmail?: string;
   notificationCount?: number;
+  moduleAccesses?: string[];
   onNavigate?: () => void;
 }
 
-export function Sidebar({ userRole, userName, userEmail, notificationCount = 0, onNavigate }: SidebarProps) {
+export function Sidebar({ userRole, userName, userEmail, notificationCount = 0, moduleAccesses, onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
 
-  const filteredItems = navItems.filter((item) => item.roles.includes(userRole));
+  let filteredItems: NavItem[] = [];
+
+  if (userRole === "admin") {
+    filteredItems = navItems.filter((item) => item.roles.includes("admin"));
+  } else if (userRole === "apprenant") {
+    filteredItems = navItems.filter((item) => item.roles.includes("apprenant"));
+  } else {
+    const defaultHomeHref = userRole === "directeur" ? "/directeur" : userRole === "secretaire" ? "/secretaire" : "/moniteur";
+    const defaultRoleAccesses = userRole === "secretaire"
+      ? ["/secretaire", "/admin/abonnements", "/admin/permis"]
+      : userRole === "moniteur"
+      ? ["/moniteur"]
+      : ["/directeur", "/secretaire", "/admin/abonnements", "/admin/permis", "/admin/examens", "/admin/compositions", "/moniteur", "/admin/cours", "/admin/statistiques"];
+
+    const activeAccesses = (moduleAccesses && moduleAccesses.length > 0)
+      ? moduleAccesses
+      : defaultRoleAccesses;
+
+    const ALL_STAFF_ITEMS: NavItem[] = [
+      { href: "/directeur", label: "Tableau de bord", icon: LayoutDashboard, roles: ["directeur"] },
+      { href: "/secretaire", label: "Inscriptions & Apprenants", icon: Users, roles: ["secretaire", "directeur"] },
+      { href: "/admin/abonnements", label: "Abonnements", icon: CreditCard, roles: ["secretaire"] },
+      { href: "/admin/permis", label: "Permis", icon: IdCard, roles: ["secretaire", "directeur"] },
+      { href: "/admin/compositions", label: "Compositions E-Exam", icon: FileText, roles: ["directeur"] },
+      { href: "/admin/examens", label: "Examens Blancs", icon: GraduationCap, roles: ["directeur"] },
+      { href: "/moniteur", label: "Évaluations Conduite", icon: Car, roles: ["moniteur", "directeur"] },
+      { href: "/admin/cours", label: "Cours de Code", icon: BookOpen, roles: ["directeur"] },
+      { href: "/admin/statistiques", label: "Statistiques", icon: BarChart3, roles: ["directeur"] },
+    ];
+
+    filteredItems = ALL_STAFF_ITEMS.filter((item) =>
+      item.href === defaultHomeHref || activeAccesses.includes(item.href)
+    );
+  }
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
