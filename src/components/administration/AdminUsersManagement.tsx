@@ -107,8 +107,66 @@ export function AdminUsersManagement({ profiles: initialProfiles, currentUserId 
     await supabase.from("profiles").update({ module_accesses: currentAccesses } as any).eq("id", selectedProfile.id);
   };
 
+  const staffProfiles = filteredProfiles.filter(p => p.role !== "apprenant");
+  const studentProfiles = filteredProfiles.filter(p => p.role === "apprenant");
+
+  const renderProfileCard = (profile: Profile) => (
+    <Card key={profile.id} className="border border-border/50 shadow-sm hover:shadow-md transition-all">
+      <CardContent className="p-4 flex flex-col gap-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg ${
+              profile.role === 'admin' ? 'bg-red-500' :
+              profile.role === 'directeur' ? 'bg-purple-500' :
+              profile.role === 'secretaire' ? 'bg-blue-500' :
+              profile.role === 'moniteur' ? 'bg-green-500' : 'bg-amber-600'
+            }`}>
+              {(profile.first_name?.[0] || "U")}{(profile.last_name?.[0] || "U")}
+            </div>
+            <div>
+              <h3 className="font-bold">{profile.first_name} {profile.last_name}</h3>
+              <p className="text-xs text-muted-foreground">{profile.email || "Aucun email"}</p>
+              <div className="flex gap-2 mt-1">
+                <Badge variant="outline" className="text-[10px] uppercase">{profile.role}</Badge>
+                {profile.is_active ? (
+                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 text-[10px]">Actif</Badge>
+                ) : (
+                  <Badge className="bg-red-100 text-red-700 hover:bg-red-100 text-[10px]">Suspendu</Badge>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {profile.role !== "apprenant" && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="h-8 gap-1"
+              onClick={() => { setSelectedProfile(profile); setShowAccessDialog(true); }}
+            >
+              <Edit className="h-3.5 w-3.5" /> Accès
+            </Button>
+          )}
+        </div>
+
+        <div className="flex justify-between items-center pt-3 border-t">
+          <p className="text-xs text-muted-foreground">Créé le {new Date(profile.created_at).toLocaleDateString("fr-FR")}</p>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className={`h-7 text-xs ${profile.is_active ? 'text-red-600 hover:text-red-700 hover:bg-red-50' : 'text-green-600 hover:text-green-700 hover:bg-green-50'}`}
+            onClick={() => toggleAccountStatus(profile.id, profile.is_active)}
+            disabled={isPending || profile.id === currentUserId}
+          >
+            {profile.is_active ? <><Ban className="h-3 w-3 mr-1"/> Suspendre</> : <><CheckCircle className="h-3 w-3 mr-1"/> Activer</>}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <div className="space-y-6 animate-fade-in pb-12">
+    <div className="space-y-8 animate-fade-in pb-12">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -126,61 +184,36 @@ export function AdminUsersManagement({ profiles: initialProfiles, currentUserId 
         <Input placeholder="Rechercher par nom, email ou rôle..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {filteredProfiles.map(profile => (
-          <Card key={profile.id} className="border border-border/50 shadow-sm hover:shadow-md transition-all">
-            <CardContent className="p-4 flex flex-col gap-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg ${
-                    profile.role === 'admin' ? 'bg-red-500' :
-                    profile.role === 'directeur' ? 'bg-purple-500' :
-                    profile.role === 'secretaire' ? 'bg-blue-500' :
-                    profile.role === 'moniteur' ? 'bg-green-500' : 'bg-gray-500'
-                  }`}>
-                    {profile.first_name[0]}{profile.last_name[0]}
-                  </div>
-                  <div>
-                    <h3 className="font-bold">{profile.first_name} {profile.last_name}</h3>
-                    <p className="text-xs text-muted-foreground">{profile.email || "Aucun email"}</p>
-                    <div className="flex gap-2 mt-1">
-                      <Badge variant="outline" className="text-[10px] uppercase">{profile.role}</Badge>
-                      {profile.is_active ? (
-                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100 text-[10px]">Actif</Badge>
-                      ) : (
-                        <Badge className="bg-red-100 text-red-700 hover:bg-red-100 text-[10px]">Suspendu</Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                
-                {profile.role !== "apprenant" && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="h-8 gap-1"
-                    onClick={() => { setSelectedProfile(profile); setShowAccessDialog(true); }}
-                  >
-                    <Edit className="h-3.5 w-3.5" /> Accès
-                  </Button>
-                )}
-              </div>
+      {/* GROUPE 1 : PERSONNEL DE L'AUTO-ÉCOLE */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 pb-2 border-b">
+          <h2 className="text-lg font-bold text-foreground">Personnel & Administration</h2>
+          <Badge className="bg-[#0A1628] text-white font-bold">{staffProfiles.length}</Badge>
+        </div>
 
-              <div className="flex justify-between items-center pt-3 border-t">
-                <p className="text-xs text-muted-foreground">Créé le {new Date(profile.created_at).toLocaleDateString("fr-FR")}</p>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className={`h-7 text-xs ${profile.is_active ? 'text-red-600 hover:text-red-700 hover:bg-red-50' : 'text-green-600 hover:text-green-700 hover:bg-green-50'}`}
-                  onClick={() => toggleAccountStatus(profile.id, profile.is_active)}
-                  disabled={isPending || profile.id === currentUserId}
-                >
-                  {profile.is_active ? <><Ban className="h-3 w-3 mr-1"/> Suspendre</> : <><CheckCircle className="h-3 w-3 mr-1"/> Activer</>}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        {staffProfiles.length === 0 ? (
+          <p className="text-sm text-muted-foreground italic py-4">Aucun membre du personnel trouvé.</p>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {staffProfiles.map(renderProfileCard)}
+          </div>
+        )}
+      </div>
+
+      {/* GROUPE 2 : APPRENANTS */}
+      <div className="space-y-4 pt-4">
+        <div className="flex items-center gap-2 pb-2 border-b">
+          <h2 className="text-lg font-bold text-foreground">Apprenants Inscrits</h2>
+          <Badge className="bg-amber-500 text-white font-bold">{studentProfiles.length}</Badge>
+        </div>
+
+        {studentProfiles.length === 0 ? (
+          <p className="text-sm text-muted-foreground italic py-4">Aucun apprenant trouvé.</p>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {studentProfiles.map(renderProfileCard)}
+          </div>
+        )}
       </div>
 
       {/* CREATE USER DIALOG */}
