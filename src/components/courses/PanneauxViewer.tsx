@@ -484,8 +484,23 @@ export function PanneauxViewer({ userRole }: PanneauxViewerProps) {
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label>Image du panneau</Label>
+            <div className="space-y-2">
+              <Label>Image du panneau (Aperçu actuel)</Label>
+              {editForm.image && (
+                <div className="flex items-center gap-4 p-3 bg-muted/40 border rounded-2xl">
+                  <div className="w-20 h-20 bg-white rounded-xl border flex items-center justify-center p-1.5 shadow-sm overflow-hidden flex-shrink-0">
+                    <img
+                      src={editForm.image}
+                      alt={editForm.title || "Panneau"}
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                  <div className="flex-1 text-xs space-y-1">
+                    <p className="font-bold text-foreground">Visuel du panneau</p>
+                    <p className="text-muted-foreground text-[11px]">Pour remplacer ce visuel, choisissez un nouveau fichier image ci-dessous.</p>
+                  </div>
+                </div>
+              )}
               <Input
                 type="file"
                 accept="image/*"
@@ -493,7 +508,7 @@ export function PanneauxViewer({ userRole }: PanneauxViewerProps) {
                 className="cursor-pointer"
               />
               {editForm.image && editForm.image.startsWith("data:image") && (
-                <p className="text-xs text-green-600 font-medium">Image chargée avec succès.</p>
+                <p className="text-xs text-green-600 font-bold">✓ Nouvelle image chargée avec succès.</p>
               )}
             </div>
 
@@ -550,17 +565,31 @@ export function PanneauxViewer({ userRole }: PanneauxViewerProps) {
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <Label>Image du panneau</Label>
+              {addForm.image && (
+                <div className="flex items-center gap-4 p-3 bg-muted/40 border rounded-2xl">
+                  <div className="w-20 h-20 bg-white rounded-xl border flex items-center justify-center p-1.5 shadow-sm overflow-hidden flex-shrink-0">
+                    <img
+                      src={addForm.image}
+                      alt="Nouveau panneau"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                  <div className="flex-1 text-xs">
+                    <p className="font-bold text-foreground">Aperçu du visuel</p>
+                  </div>
+                </div>
+              )}
               <Input
                 type="file"
                 accept="image/*"
                 onChange={(e) => handleImageUpload(e, false)}
                 className="cursor-pointer"
-                required
+                required={!addForm.image}
               />
               {addForm.image && addForm.image.startsWith("data:image") && (
-                <p className="text-xs text-green-600 font-medium">Image prête à être ajoutée.</p>
+                <p className="text-xs text-green-600 font-bold">✓ Image prête à être ajoutée.</p>
               )}
             </div>
 
