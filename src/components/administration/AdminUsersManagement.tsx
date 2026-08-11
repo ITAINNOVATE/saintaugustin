@@ -183,7 +183,7 @@ export function AdminUsersManagement({ profiles: initialProfiles, currentUserId 
             <Button 
               variant="outline" 
               size="sm"
-              className="h-8 gap-1"
+              className="h-8 gap-1 border-amber-400/80 text-amber-900 bg-amber-50 hover:bg-amber-100 hover:text-amber-950 font-bold dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-700"
               onClick={() => { setSelectedProfile(profile); setShowAccessDialog(true); }}
             >
               <Edit className="h-3.5 w-3.5" /> Accès
@@ -197,7 +197,7 @@ export function AdminUsersManagement({ profiles: initialProfiles, currentUserId 
             <Button 
               variant="ghost" 
               size="sm" 
-              className={`h-7 text-xs ${profile.is_active ? 'text-red-600 hover:text-red-700 hover:bg-red-50' : 'text-green-600 hover:text-green-700 hover:bg-green-50'}`}
+              className={`h-7 text-xs font-bold border ${profile.is_active ? 'text-red-700 bg-red-50 hover:bg-red-100 hover:text-red-900 border-red-200 dark:bg-red-950/70 dark:text-red-300' : 'text-green-700 bg-green-50 hover:bg-green-100 hover:text-green-900 border-green-200 dark:bg-green-950/70 dark:text-green-300'}`}
               onClick={() => toggleAccountStatus(profile.id, profile.is_active)}
               disabled={isPending || profile.id === currentUserId}
             >
@@ -207,7 +207,7 @@ export function AdminUsersManagement({ profiles: initialProfiles, currentUserId 
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 px-2"
+                className="h-7 text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 hover:text-red-900 border border-red-200 dark:bg-red-950/70 dark:text-red-300 px-2"
                 onClick={() => setDeleteProfile(profile)}
                 title="Supprimer le compte"
               >

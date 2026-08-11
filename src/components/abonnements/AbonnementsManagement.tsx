@@ -260,20 +260,20 @@ export function AbonnementsManagement({ subscriptions: initialSubs, prices, user
                     <td className="p-4">
                       <div className="flex items-center justify-end gap-1">
                         {sub.status === "pending" && userRole === "admin" && (
-                          <Button size="icon-sm" variant="ghost" className="text-green-600 hover:text-green-700" onClick={() => handleActivate(sub)} title="Activer"><CheckCircle className="h-4 w-4" /></Button>
+                          <Button size="icon-sm" variant="ghost" className="text-green-600 dark:text-green-400 hover:text-green-800 hover:bg-green-100 dark:hover:bg-green-950/80 border border-green-200/40" onClick={() => handleActivate(sub)} title="Activer"><CheckCircle className="h-4 w-4" /></Button>
                         )}
                         {sub.status === "active" && userRole === "admin" && (
                           <>
-                            <Button size="icon-sm" variant="ghost" className="text-orange-500" onClick={() => handleSuspend(sub)} title="Suspendre"><XCircle className="h-4 w-4" /></Button>
-                            <Button size="icon-sm" variant="ghost" className="text-blue-600" onClick={() => handleExtend(sub, 30)} title="+30 jours"><RefreshCw className="h-4 w-4" /></Button>
+                            <Button size="icon-sm" variant="ghost" className="text-orange-600 dark:text-orange-400 hover:text-orange-800 hover:bg-orange-100 dark:hover:bg-orange-950/80 border border-orange-200/40" onClick={() => handleSuspend(sub)} title="Suspendre"><XCircle className="h-4 w-4" /></Button>
+                            <Button size="icon-sm" variant="ghost" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 hover:bg-blue-100 dark:hover:bg-blue-950/80 border border-blue-200/40" onClick={() => handleExtend(sub, 30)} title="+30 jours"><RefreshCw className="h-4 w-4" /></Button>
                           </>
                         )}
                         {(sub.status === "suspended" || sub.status === "expired") && userRole === "admin" && (
-                          <Button size="icon-sm" variant="ghost" className="text-green-600" onClick={() => handleActivate(sub)} title="Réactiver"><CheckCircle className="h-4 w-4" /></Button>
+                          <Button size="icon-sm" variant="ghost" className="text-green-600 dark:text-green-400 hover:text-green-800 hover:bg-green-100 dark:hover:bg-green-950/80 border border-green-200/40" onClick={() => handleActivate(sub)} title="Réactiver"><CheckCircle className="h-4 w-4" /></Button>
                         )}
-                        <Button size="icon-sm" variant="ghost" onClick={() => setSelectedSub(sub)} title="Détails"><TrendingUp className="h-4 w-4" /></Button>
+                        <Button size="icon-sm" variant="ghost" className="text-purple-600 dark:text-purple-400 hover:text-purple-800 hover:bg-purple-100 dark:hover:bg-purple-950/80 border border-purple-200/40" onClick={() => setSelectedSub(sub)} title="Détails"><TrendingUp className="h-4 w-4" /></Button>
                         {userRole === "admin" && (
-                          <Button size="icon-sm" variant="ghost" className="text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDeleteSub(sub)} title="Supprimer"><Trash2 className="h-4 w-4" /></Button>
+                          <Button size="icon-sm" variant="ghost" className="text-red-600 dark:text-red-400 hover:text-red-800 hover:bg-red-100 dark:hover:bg-red-950/80 border border-red-200/40" onClick={() => handleDeleteSub(sub)} title="Supprimer"><Trash2 className="h-4 w-4" /></Button>
                         )}
                       </div>
                     </td>

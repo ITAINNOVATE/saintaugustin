@@ -315,17 +315,21 @@ export function StudentsManagement({ students: initialStudents, userRole }: Stud
                   </td>
                   <td className="p-4">
                     <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenViewStudent(student)} title="Voir le parcours complet"><Eye className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(student)} title="Modifier"><Edit className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleOpenViewStudent(student)} title="Voir le parcours complet" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 hover:bg-blue-100 dark:hover:bg-blue-950/80 border border-blue-200/40">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(student)} title="Modifier" className="text-amber-600 dark:text-amber-400 hover:text-amber-800 hover:bg-amber-100 dark:hover:bg-amber-950/80 border border-amber-200/40">
+                        <Edit className="h-4 w-4" />
+                      </Button>
                       {student.status === "pending" && (
-                        <Button variant="ghost" size="icon" onClick={() => handleValidate(student)} title="Valider" className="text-green-600 hover:text-green-700">
+                        <Button variant="ghost" size="icon" onClick={() => handleValidate(student)} title="Valider" className="text-green-600 dark:text-green-400 hover:text-green-800 hover:bg-green-100 dark:hover:bg-green-950/80 border border-green-200/40">
                           <CheckCircle className="h-4 w-4" />
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" onClick={() => handleArchive(student)} title="Archiver/Réactiver" className="text-orange-500 hover:text-orange-600">
+                      <Button variant="ghost" size="icon" onClick={() => handleArchive(student)} title="Archiver/Réactiver" className="text-orange-600 dark:text-orange-400 hover:text-orange-800 hover:bg-orange-100 dark:hover:bg-orange-950/80 border border-orange-200/40">
                         <Archive className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setDeleteStudent(student)} title="Supprimer" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteStudent(student)} title="Supprimer" className="text-red-600 dark:text-red-400 hover:text-red-800 hover:bg-red-100 dark:hover:bg-red-950/80 border border-red-200/40">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

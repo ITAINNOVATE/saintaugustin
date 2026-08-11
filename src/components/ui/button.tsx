@@ -8,14 +8,14 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-[#0A1628] text-white hover:bg-[#1E4070] shadow-sm",
-        gold: "bg-[#F5A623] text-[#0A1628] hover:bg-[#F9CC74] shadow-gold font-semibold",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-input bg-background hover:bg-accent/10 hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent/10 hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-        accent: "bg-[#00C9A7] text-white hover:bg-[#00B397] shadow-accent",
+        default: "bg-[#0A1628] text-white hover:bg-[#1E4070] hover:text-white shadow-sm font-semibold",
+        gold: "bg-[#F5A623] text-[#0A1628] hover:bg-[#F9CC74] hover:text-[#0A1628] shadow-gold font-extrabold",
+        destructive: "bg-red-600 text-white hover:bg-red-700 hover:text-white font-bold",
+        outline: "border border-border/80 bg-background text-foreground hover:bg-muted/90 hover:text-foreground shadow-sm font-semibold",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 font-medium",
+        ghost: "text-foreground hover:bg-muted/80 hover:text-foreground font-medium",
+        link: "text-primary underline-offset-4 hover:underline font-medium",
+        accent: "bg-[#00C9A7] text-white hover:bg-[#00B397] shadow-accent font-semibold",
       },
       size: {
         default: "h-10 px-4 py-2",
