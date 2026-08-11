@@ -129,9 +129,11 @@ export function StudentsManagement({ students: initialStudents, userRole }: Stud
             .from("students") as any)
             .update(payload)
             .eq("id", selectedStudent.id)
-            .select()
-            .single();
+            .select();
+          
           if (error) throw error;
+
+          const updatedStudent = (data && data.length > 0) ? data[0] : { ...selectedStudent, ...payload };
 
           // Sync with profiles table if user_id exists
           if (selectedStudent.user_id) {
@@ -144,18 +146,20 @@ export function StudentsManagement({ students: initialStudents, userRole }: Stud
               .eq("id", selectedStudent.user_id);
           }
 
-          setStudents(prev => prev.map(s => s.id === selectedStudent.id ? { ...s, ...data } : s));
+          setStudents(prev => prev.map(s => s.id === selectedStudent.id ? { ...s, ...updatedStudent } : s));
           toast({ title: "Apprenant modifié avec succès" });
         } else {
           const autoMatricule = `SA-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
           const { data, error } = await (supabase
             .from("students") as any)
             .insert([{ ...payload, matricule: autoMatricule, status: "validated" }])
-            .select()
-            .single();
+            .select();
+          
           if (error) throw error;
-          setStudents(prev => [data, ...prev]);
-          toast({ title: "Apprenant inscrit avec succès", description: `Matricule: ${data.matricule}` });
+
+          const newStudent = (data && data.length > 0) ? data[0] : { id: `std-${Date.now()}`, ...payload, matricule: autoMatricule, status: "validated" };
+          setStudents(prev => [newStudent, ...prev]);
+          toast({ title: "Apprenant inscrit avec succès", description: `Matricule: ${newStudent.matricule || autoMatricule}` });
         }
         setShowForm(false);
         setSelectedStudent(null);
