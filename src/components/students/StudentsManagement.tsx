@@ -67,20 +67,42 @@ export function StudentsManagement({ students: initialStudents, userRole }: Stud
     e.preventDefault();
     startTransition(async () => {
       try {
+        const payload: any = {
+          first_name: form.first_name,
+          last_name: form.last_name,
+          email: form.email || null,
+          phone: form.phone || null,
+          address: form.address || null,
+          date_of_birth: form.birth_date || null,
+        };
+
         if (selectedStudent) {
           const { data, error } = await (supabase
             .from("students") as any)
-            .update({ ...form })
+            .update(payload)
             .eq("id", selectedStudent.id)
             .select()
             .single();
           if (error) throw error;
+
+          // Sync with profiles table if user_id exists
+          if (selectedStudent.user_id) {
+            await (supabase.from("profiles") as any)
+              .update({
+                first_name: form.first_name,
+                last_name: form.last_name,
+                phone: form.phone || null,
+              })
+              .eq("id", selectedStudent.user_id);
+          }
+
           setStudents(prev => prev.map(s => s.id === selectedStudent.id ? { ...s, ...data } : s));
           toast({ title: "Apprenant modifié avec succès" });
         } else {
+          const autoMatricule = `SA-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
           const { data, error } = await (supabase
             .from("students") as any)
-            .insert([{ ...form, matricule: "" }])
+            .insert([{ ...payload, matricule: autoMatricule, status: "validated" }])
             .select()
             .single();
           if (error) throw error;
@@ -97,12 +119,13 @@ export function StudentsManagement({ students: initialStudents, userRole }: Stud
   };
 
   const handleArchive = async (student: Student) => {
+    const nextStatus = student.status === "archived" ? "validated" : "archived";
     const { error } = await (supabase
       .from("students") as any)
-      .update({ status: student.status === "archived" ? "validated" : "archived" })
+      .update({ status: nextStatus })
       .eq("id", student.id);
     if (!error) {
-      setStudents(prev => prev.map(s => s.id === student.id ? { ...s, status: student.status === "archived" ? "validated" : "archived" } : s));
+      setStudents(prev => prev.map(s => s.id === student.id ? { ...s, status: nextStatus as any } : s));
       toast({ title: student.status === "archived" ? "Apprenant réactivé" : "Apprenant archivé" });
     }
   };
@@ -113,7 +136,7 @@ export function StudentsManagement({ students: initialStudents, userRole }: Stud
       .update({ status: "validated" })
       .eq("id", student.id);
     if (!error) {
-      setStudents(prev => prev.map(s => s.id === student.id ? { ...s, status: "validated" } : s));
+      setStudents(prev => prev.map(s => s.id === student.id ? { ...s, status: "validated" as any } : s));
       toast({ title: "Inscription validée" });
     }
   };
@@ -121,17 +144,17 @@ export function StudentsManagement({ students: initialStudents, userRole }: Stud
   const openEdit = (student: Student) => {
     setSelectedStudent(student);
     setForm({
-      first_name: student.first_name,
-      last_name: student.last_name,
+      first_name: student.first_name || "",
+      last_name: student.last_name || "",
       email: student.email || "",
       phone: student.phone || "",
-      birth_date: student.birth_date || "",
-      birth_place: student.birth_place || "",
-      gender: student.gender || "",
+      birth_date: (student as any).date_of_birth || student.birth_date || "",
+      birth_place: (student as any).birth_place || "",
+      gender: (student as any).gender || "",
       address: student.address || "",
-      city: student.city || "",
-      nationality: student.nationality || "Béninoise",
-      notes: student.notes || "",
+      city: (student as any).city || "",
+      nationality: (student as any).nationality || "Béninoise",
+      notes: (student as any).notes || "",
     });
     setShowForm(true);
   };
