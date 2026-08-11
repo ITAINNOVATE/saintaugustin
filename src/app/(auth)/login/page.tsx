@@ -127,6 +127,7 @@ export default function LoginPage() {
 
       // Insérer le profil dans la table profiles avec le rôle apprenant
       if (data.user) {
+        // @ts-ignore
         await supabase.from("profiles").upsert({
           id: data.user.id,
           first_name: firstName,
@@ -135,7 +136,7 @@ export default function LoginPage() {
           phone: phone || null,
           role: "apprenant",
           is_active: true,
-        });
+        } as any);
       }
 
       document.cookie = "demo_role=apprenant; path=/";
