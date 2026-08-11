@@ -33,7 +33,9 @@ export default async function AdministrationPage() {
   }
 
   // Fetch all profiles for the management table
-  const { data: allProfiles } = await supabase
+  const { createAdminClient } = await import("@/lib/supabase/server");
+  const adminSupabase = await createAdminClient();
+  const { data: allProfiles } = await adminSupabase
     .from("profiles")
     .select("*")
     .order("created_at", { ascending: false });

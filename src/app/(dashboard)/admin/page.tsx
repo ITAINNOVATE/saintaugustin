@@ -27,17 +27,22 @@ export default async function AdminDashboardPage() {
       }
     } catch {}
 
-    try { studentsData = (await supabase.from("students").select("id, first_name, last_name, matricule, status, created_at")).data || []; } catch {}
-    try { subsData = (await supabase.from("subscriptions").select("id, status, plan, created_at")).data || []; } catch {}
-    try { coursesData = (await supabase.from("courses").select("id, title, is_published, chapters(id, lessons(id))")).data || []; } catch {}
-    try { examsData = (await supabase.from("exam_sessions").select("id, student_id, score, is_passed, started_at, students(id, first_name, last_name, matricule)")).data || []; } catch {}
-    try { permitsData = (await supabase.from("learner_permits").select("id, created_at")).data || []; } catch {}
-    try { progressData = (await supabase.from("lesson_progress").select("id, student_id, lesson_id, completed, completed_at")).data || []; } catch {}
     try {
-      if (user) {
-        const r: any = await supabase.from("notifications").select("id").eq("user_id", user.id).eq("is_read", false);
-        notificationCount = r?.data?.length || 0;
-      }
+      const { createAdminClient } = await import("@/lib/supabase/server");
+      const adminSupabase = await createAdminClient();
+
+      try { studentsData = (await adminSupabase.from("students").select("id, first_name, last_name, matricule, status, created_at")).data || []; } catch {}
+      try { subsData = (await adminSupabase.from("subscriptions").select("id, status, plan, created_at")).data || []; } catch {}
+      try { coursesData = (await adminSupabase.from("courses").select("id, title, is_published, chapters(id, lessons(id))")).data || []; } catch {}
+      try { examsData = (await adminSupabase.from("exam_sessions").select("id, student_id, score, is_passed, started_at, students(id, first_name, last_name, matricule)")).data || []; } catch {}
+      try { permitsData = (await adminSupabase.from("learner_permits").select("id, created_at")).data || []; } catch {}
+      try { progressData = (await adminSupabase.from("lesson_progress").select("id, student_id, lesson_id, completed, completed_at")).data || []; } catch {}
+      try {
+        if (user) {
+          const r: any = await adminSupabase.from("notifications").select("id").eq("user_id", user.id).eq("is_read", false);
+          notificationCount = r?.data?.length || 0;
+        }
+      } catch {}
     } catch {}
   } catch {}
 

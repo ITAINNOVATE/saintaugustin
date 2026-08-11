@@ -21,7 +21,9 @@ export default async function AdminApprenantsPage() {
 
   let students: any[] = [];
   try {
-    const res = await supabase.from("students").select("*, subscriptions(id, status, plan, end_date)").order("created_at", { ascending: false });
+    const { createAdminClient } = await import("@/lib/supabase/server");
+    const adminSupabase = await createAdminClient();
+    const res = await adminSupabase.from("students").select("*, subscriptions(id, status, plan, end_date)").order("created_at", { ascending: false });
     students = res.data || [];
   } catch {}
 
