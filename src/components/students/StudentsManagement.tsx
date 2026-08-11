@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
 import { formatDate, getStatusColor, getStatusLabel } from "@/lib/utils";
 import {
-  Search, UserPlus, Filter, Eye, Edit, Archive,
+  Search, UserPlus, Filter, Eye, Edit, Archive, Trash2,
   Users, ChevronLeft, ChevronRight, Phone, Mail, MapPin, Calendar, Hash
 } from "lucide-react";
 import type { Student, UserRole } from "@/types/database";
@@ -31,6 +31,7 @@ export function StudentsManagement({ students: initialStudents, userRole }: Stud
   const [showForm, setShowForm] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [viewStudent, setViewStudent] = useState<Student | null>(null);
+  const [deleteStudent, setDeleteStudent] = useState<Student | null>(null);
   const [page, setPage] = useState(1);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
@@ -114,6 +115,26 @@ export function StudentsManagement({ students: initialStudents, userRole }: Stud
         resetForm();
       } catch (err: any) {
         toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      }
+    });
+  };
+
+  const handleDeleteStudent = async () => {
+    if (!deleteStudent) return;
+    startTransition(async () => {
+      try {
+        const { error } = await (supabase.from("students") as any).delete().eq("id", deleteStudent.id);
+        if (error) throw error;
+
+        if (deleteStudent.user_id) {
+          await (supabase.from("profiles") as any).delete().eq("id", deleteStudent.user_id);
+        }
+
+        setStudents(prev => prev.filter(s => s.id !== deleteStudent.id));
+        toast({ title: "Apprenant supprimé avec succès" });
+        setDeleteStudent(null);
+      } catch (err: any) {
+        toast({ title: "Erreur lors de la suppression", description: err.message, variant: "destructive" });
       }
     });
   };
@@ -259,6 +280,9 @@ export function StudentsManagement({ students: initialStudents, userRole }: Stud
                       <Button variant="ghost" size="icon" onClick={() => handleArchive(student)} title="Archiver/Réactiver" className="text-orange-500 hover:text-orange-600">
                         <Archive className="h-4 w-4" />
                       </Button>
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteStudent(student)} title="Supprimer" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -389,6 +413,34 @@ export function StudentsManagement({ students: initialStudents, userRole }: Stud
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleteStudent} onOpenChange={() => setDeleteStudent(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <Trash2 className="h-5 w-5" /> Supprimer l'apprenant ?
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <p className="text-sm text-muted-foreground">
+              Êtes-vous sûr de vouloir supprimer définitivement l'apprenant{" "}
+              <strong className="text-foreground">{deleteStudent?.first_name} {deleteStudent?.last_name}</strong> ({deleteStudent?.matricule || "sans matricule"}) ?
+              Cette action est irréversible.
+            </p>
+            <div className="flex gap-3 justify-end pt-2">
+              <Button variant="outline" onClick={() => setDeleteStudent(null)}>Annuler</Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteStudent}
+                disabled={isPending}
+                className="bg-red-600 hover:bg-red-700 font-bold"
+              >
+                {isPending ? "Suppression..." : "Confirmer la suppression"}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
-import { UserPlus, Shield, Ban, CheckCircle, Search, Edit } from "lucide-react";
+import { UserPlus, Shield, Ban, CheckCircle, Search, Edit, Trash2 } from "lucide-react";
 import type { Profile, UserRole } from "@/types/database";
 
 interface AdminUsersManagementProps {
@@ -34,6 +34,7 @@ export function AdminUsersManagement({ profiles: initialProfiles, currentUserId 
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showAccessDialog, setShowAccessDialog] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
+  const [deleteProfile, setDeleteProfile] = useState<Profile | null>(null);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const supabase = createClient();
@@ -107,6 +108,26 @@ export function AdminUsersManagement({ profiles: initialProfiles, currentUserId 
     await supabase.from("profiles").update({ module_accesses: currentAccesses } as any).eq("id", selectedProfile.id);
   };
 
+  const handleDeleteProfile = async () => {
+    if (!deleteProfile) return;
+    if (deleteProfile.id === currentUserId) {
+      toast({ title: "Action impossible", description: "Vous ne pouvez pas supprimer votre propre compte.", variant: "destructive" });
+      return;
+    }
+    startTransition(async () => {
+      try {
+        const { error } = await (supabase.from("profiles") as any).delete().eq("id", deleteProfile.id);
+        if (error) throw error;
+        await (supabase.from("students") as any).delete().eq("user_id", deleteProfile.id);
+        setProfiles(prev => prev.filter(p => p.id !== deleteProfile.id));
+        toast({ title: "Compte supprimé avec succès" });
+        setDeleteProfile(null);
+      } catch (err: any) {
+        toast({ title: "Erreur lors de la suppression", description: err.message, variant: "destructive" });
+      }
+    });
+  };
+
   const staffProfiles = filteredProfiles.filter(p => p.role !== "apprenant");
   const studentProfiles = filteredProfiles.filter(p => p.role === "apprenant");
 
@@ -151,15 +172,28 @@ export function AdminUsersManagement({ profiles: initialProfiles, currentUserId 
 
         <div className="flex justify-between items-center pt-3 border-t">
           <p className="text-xs text-muted-foreground">Créé le {new Date(profile.created_at).toLocaleDateString("fr-FR")}</p>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className={`h-7 text-xs ${profile.is_active ? 'text-red-600 hover:text-red-700 hover:bg-red-50' : 'text-green-600 hover:text-green-700 hover:bg-green-50'}`}
-            onClick={() => toggleAccountStatus(profile.id, profile.is_active)}
-            disabled={isPending || profile.id === currentUserId}
-          >
-            {profile.is_active ? <><Ban className="h-3 w-3 mr-1"/> Suspendre</> : <><CheckCircle className="h-3 w-3 mr-1"/> Activer</>}
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className={`h-7 text-xs ${profile.is_active ? 'text-red-600 hover:text-red-700 hover:bg-red-50' : 'text-green-600 hover:text-green-700 hover:bg-green-50'}`}
+              onClick={() => toggleAccountStatus(profile.id, profile.is_active)}
+              disabled={isPending || profile.id === currentUserId}
+            >
+              {profile.is_active ? <><Ban className="h-3 w-3 mr-1"/> Suspendre</> : <><CheckCircle className="h-3 w-3 mr-1"/> Activer</>}
+            </Button>
+            {profile.id !== currentUserId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 px-2"
+                onClick={() => setDeleteProfile(profile)}
+                title="Supprimer le compte"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -304,6 +338,34 @@ export function AdminUsersManagement({ profiles: initialProfiles, currentUserId 
         </DialogContent>
       </Dialog>
 
+      {/* DELETE CONFIRMATION DIALOG */}
+      <Dialog open={!!deleteProfile} onOpenChange={() => setDeleteProfile(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <Trash2 className="h-5 w-5" /> Supprimer le compte ?
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <p className="text-sm text-muted-foreground">
+              Êtes-vous sûr de vouloir supprimer définitivement le compte de{" "}
+              <strong className="text-foreground">{deleteProfile?.first_name} {deleteProfile?.last_name}</strong> ({deleteProfile?.role}) ?
+              Cette action supprimera également ses données associées.
+            </p>
+            <div className="flex gap-3 justify-end pt-2">
+              <Button variant="outline" onClick={() => setDeleteProfile(null)}>Annuler</Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteProfile}
+                disabled={isPending}
+                className="bg-red-600 hover:bg-red-700 font-bold"
+              >
+                {isPending ? "Suppression..." : "Confirmer la suppression"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
