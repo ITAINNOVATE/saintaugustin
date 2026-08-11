@@ -15,7 +15,7 @@ import { formatDate, getDaysRemaining, getPlanLabel, getStatusColor, getStatusLa
 import {
   Search, Filter, CreditCard, CheckCircle, XCircle, Clock,
   RefreshCw, Plus, ChevronLeft, ChevronRight, AlertTriangle,
-  Calendar, User, TrendingUp
+  Calendar, User, TrendingUp, Trash2
 } from "lucide-react";
 import type { Subscription, UserRole } from "@/types/database";
 
@@ -101,6 +101,19 @@ export function AbonnementsManagement({ subscriptions: initialSubs, prices, user
       if (!error) {
         setSubs(prev => prev.map(s => s.id === sub.id ? { ...s, status: "suspended" } : s));
         toast({ title: "Abonnement suspendu" });
+      }
+    });
+  };
+
+  const handleDeleteSub = async (sub: SubWithStudent) => {
+    if (!confirm("Voulez-vous vraiment supprimer cet abonnement ?")) return;
+    startTransition(async () => {
+      const { error } = await (supabase.from("subscriptions") as any).delete().eq("id", sub.id);
+      if (!error) {
+        setSubs(prev => prev.filter(s => s.id !== sub.id));
+        toast({ title: "Abonnement supprimé" });
+      } else {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
       }
     });
   };
@@ -259,6 +272,9 @@ export function AbonnementsManagement({ subscriptions: initialSubs, prices, user
                           <Button size="icon-sm" variant="ghost" className="text-green-600" onClick={() => handleActivate(sub)} title="Réactiver"><CheckCircle className="h-4 w-4" /></Button>
                         )}
                         <Button size="icon-sm" variant="ghost" onClick={() => setSelectedSub(sub)} title="Détails"><TrendingUp className="h-4 w-4" /></Button>
+                        {userRole === "admin" && (
+                          <Button size="icon-sm" variant="ghost" className="text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDeleteSub(sub)} title="Supprimer"><Trash2 className="h-4 w-4" /></Button>
+                        )}
                       </div>
                     </td>
                   </tr>

@@ -49,6 +49,22 @@ export function AdminCoursesManagement({ courses: initialCourses, adminId }: Adm
     });
   };
 
+  const handleDeleteCourse = async (courseId: string) => {
+    if (!confirm("Voulez-vous vraiment supprimer ce cours ?")) return;
+    startTransition(async () => {
+      try {
+        await (supabase.from("lessons") as any).delete().eq("course_id", courseId);
+        await (supabase.from("chapters") as any).delete().eq("course_id", courseId);
+        const { error } = await (supabase.from("courses") as any).delete().eq("id", courseId);
+        if (error) throw error;
+        setCourses(prev => prev.filter(c => c.id !== courseId));
+        toast({ title: "Cours supprimé" });
+      } catch (err: any) {
+        toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      }
+    });
+  };
+
   const handleTogglePublish = async (course: any) => {
     const { error } = await (supabase.from("courses") as any).update({ is_published: !course.is_published }).eq("id", course.id);
     if (!error) { setCourses(prev => prev.map(c => c.id === course.id ? { ...c, is_published: !course.is_published } : c)); toast({ title: course.is_published ? "Cours dépublié" : "Cours publié" }); }
@@ -139,6 +155,7 @@ export function AdminCoursesManagement({ courses: initialCourses, adminId }: Adm
                   {course.is_published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
                 <Button size="icon-sm" variant="ghost" onClick={() => { setSelectedCourse(course); setCourseForm({ title: course.title, description: course.description || "", category: course.category || "", level: course.level || "débutant" }); setShowCourseDialog(true); }}><Edit className="h-4 w-4" /></Button>
+                <Button size="icon-sm" variant="ghost" className="text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDeleteCourse(course.id)} title="Supprimer le cours"><Trash2 className="h-4 w-4" /></Button>
               </div>
             </div>
 
