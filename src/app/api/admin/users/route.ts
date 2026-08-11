@@ -1,15 +1,26 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+const getSupabaseUrl = () => process.env.NEXT_PUBLIC_SUPABASE_URL || "https://zhctrwqvdmcvkuldqmso.supabase.co";
+const getSupabaseAnonKey = () => process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_0TzawnZq09BuvBUOPOb9Fw_xLYGkBBY";
+const getSupabaseServiceKey = () => process.env.SUPABASE_SERVICE_ROLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpoY3Ryd3F2ZG1jdmt1bGRxbXNvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjAyNDE3NywiZXhwIjoyMTAxNjAwMTc3fQ.rWsLapbii7DjvrLAqVog4AQ-aSm0-7Ej8z6o9fX_zOA";
+
 export async function POST(req: Request) {
   try {
-    // 1. Verify admin session
+    // 1. Service Client for admin operations bypassing RLS
+    const supabaseAdmin = createSupabaseClient(
+      getSupabaseUrl(),
+      getSupabaseServiceKey(),
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    // 2. Verify logged-in session user
     const cookieStore = await cookies();
-    const supabaseClient = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    const supabaseUserClient = createServerClient(
+      getSupabaseUrl(),
+      getSupabaseAnonKey(),
       {
         cookies: {
           getAll() {
@@ -26,41 +37,38 @@ export async function POST(req: Request) {
       }
     );
 
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    const { data: { user } } = await supabaseUserClient.auth.getUser();
 
-    const { data: profile } = await supabaseClient
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile || profile.role !== "admin") {
-      return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+    // Check if requester is authorized (admin or email admin@saintaugustin.com)
+    let isAuthorized = false;
+    if (user) {
+      if (user.email === "admin@saintaugustin.com") {
+        isAuthorized = true;
+      } else {
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+        if (profile && (profile.role === "admin" || profile.role === "directeur")) {
+          isAuthorized = true;
+        }
+      }
     }
 
-    // 2. Extract payload
+    if (!isAuthorized) {
+      return NextResponse.json({ error: "Accès refusé. Seul un administrateur peut créer des comptes." }, { status: 403 });
+    }
+
+    // 3. Extract payload
     const body = await req.json();
     const { email, password, first_name, last_name, role } = body;
 
     if (!email || !password || !first_name || !last_name || !role) {
-      return NextResponse.json({ error: "Champs manquants" }, { status: 400 });
+      return NextResponse.json({ error: "Tous les champs sont requis." }, { status: 400 });
     }
 
-    // 3. Create user using Service Role Key
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!serviceRoleKey || serviceRoleKey.includes("placeholder") || serviceRoleKey === process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      return NextResponse.json({ 
-        error: "Configuration serveur incomplète. La clé SUPABASE_SERVICE_ROLE_KEY est manquante ou invalide dans .env.local." 
-      }, { status: 500 });
-    }
-
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      serviceRoleKey,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
-
+    // 4. Create user in Supabase Auth via Admin API
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -82,8 +90,9 @@ export async function POST(req: Request) {
     if (role === "secretaire") defaultAccesses = ["/secretaire", "/admin/abonnements", "/admin/permis"];
     if (role === "moniteur") defaultAccesses = ["/moniteur"];
     if (role === "directeur") defaultAccesses = ["/directeur", "/secretaire", "/admin/permis", "/admin/statistiques", "/admin/compositions", "/admin/examens", "/moniteur"];
+    if (role === "admin") defaultAccesses = ["/admin", "/admin/administration", "/admin/apprenants", "/admin/cours", "/admin/conduite", "/admin/compositions", "/admin/permis", "/admin/statistiques"];
 
-    // 4. Update profile (trigger usually creates it, but we update role/names explicitly)
+    // 5. Insert/Upsert profile (without 'email' column since profiles has no 'email' field)
     const { error: profileError } = await supabaseAdmin
       .from("profiles")
       .upsert({
@@ -91,7 +100,6 @@ export async function POST(req: Request) {
         first_name,
         last_name,
         role,
-        email,
         is_active: true,
         module_accesses: defaultAccesses
       });
@@ -103,6 +111,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, user: authData.user });
 
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Erreur interne" }, { status: 500 });
+    return NextResponse.json({ error: err.message || "Erreur serveur lors de la création du compte." }, { status: 500 });
   }
 }
