@@ -46,13 +46,15 @@ export default function LoginPage() {
       }
 
       if (data.user) {
+        const metadataRole = data.user.user_metadata?.role;
         const profileRes: any = await supabase
           .from("profiles")
           .select("role, is_active, first_name")
           .eq("id", data.user.id)
           .single();
         
-        const profile = profileRes?.data || { role: "apprenant", is_active: true, first_name: "Apprenant" };
+        const effectiveRole = profileRes?.data?.role || metadataRole || (email === "admin@saintaugustin.com" ? "admin" : "apprenant");
+        const profile = profileRes?.data || { role: effectiveRole, is_active: true, first_name: data.user.user_metadata?.first_name || "Utilisateur" };
 
         if (profile && profile.is_active === false) {
           await supabase.auth.signOut();
@@ -73,7 +75,7 @@ export default function LoginPage() {
           apprenant: "/apprenant/cours",
         };
 
-        router.push(roleRoutes[profile?.role || "admin"] || "/admin");
+        router.push(roleRoutes[effectiveRole] || "/admin");
       }
     } catch (err: any) {
       setError(err?.message || "Une erreur inattendue est survenue.");

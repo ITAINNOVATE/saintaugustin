@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+
 const PUBLIC_ROUTES = ["/login", "/forgot-password", "/reset-password"];
 
 // L'admin a accès à TOUTES les pages
@@ -28,6 +30,7 @@ export async function middleware(request: NextRequest) {
   const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseUrl = rawUrl && rawUrl.startsWith("http") ? rawUrl : "https://zhctrwqvdmcvkuldqmso.supabase.co";
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_0TzawnZq09BuvBUOPOb9Fw_xLYGkBBY";
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpoY3Ryd3F2ZG1jdmt1bGRxbXNvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjAyNDE3NywiZXhwIjoyMTAxNjAwMTc3fQ.rWsLapbii7DjvrLAqVog4AQ-aSm0-7Ej8z6o9fX_zOA";
   const isPlaceholderUrl = false;
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -64,11 +67,12 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // Fetch user role from profile
-  let role = "apprenant"; // Default to apprenant for new accounts without a profile yet
+  // Fetch user role from profile using service role key (bypasses RLS)
+  const supabaseAdmin = createSupabaseClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+  let role = user?.user_metadata?.role || (user?.email === "admin@saintaugustin.com" ? "admin" : "apprenant");
   let moduleAccesses: string[] | null = null;
   try {
-    let profileRes = await supabase
+    let profileRes = await supabaseAdmin
       .from("profiles")
       .select("role, is_active, module_accesses")
       .eq("id", user.id)
@@ -78,7 +82,7 @@ export async function middleware(request: NextRequest) {
     if (user.email === "admin@saintaugustin.com") {
       role = "admin";
       if (!profileRes.data || profileRes.data.role !== "admin") {
-        await supabase.from("profiles").upsert({
+        await supabaseAdmin.from("profiles").upsert({
           id: user.id,
           role: "admin",
           first_name: "Administrateur",
@@ -91,7 +95,7 @@ export async function middleware(request: NextRequest) {
         await supabase.auth.signOut();
         return NextResponse.redirect(new URL("/login?error=account_inactive", request.url));
       }
-      role = (profileRes.data as any).role || "admin";
+      role = (profileRes.data as any).role || role;
       moduleAccesses = (profileRes.data as any).module_accesses || null;
     }
   } catch {}
